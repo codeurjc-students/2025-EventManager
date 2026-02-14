@@ -1,0 +1,1529 @@
+openapi: 3.0.3
+
+info:
+  title: Event management application
+  description: This is an application to manage events
+  contact:
+    email: sergio.torres.289@gmail.com
+  version: 1.0.0
+
+servers:
+  - url: 'http://localhost:8090'
+    description: Generated server url
+
+security:
+  - bearerAuth: []
+
+tags:
+  - name: user
+    description: Everything about the users
+  - name: event
+    description: Everything about the events
+  - name: ticket
+    description:  Everything about tickets of the events
+  - name: gift
+    description:  Everything about the gifts
+
+paths:
+  /api/user:
+    get:
+      tags:
+        - user
+      summary: Get user information by username
+      operationId: getUserInformationByUsername
+      parameters:
+        - name: username
+          in: query
+          description: Username whose information is going to be retrieved
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+      security:
+        - bearerAuth: []
+  
+  /api/user/profile:
+    get:
+      tags:
+        - user
+      summary: Get authenticated user information from JWT token
+      operationId: getAuthenticatedUserProfile
+      responses:
+        '200':
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+      security:
+        - bearerAuth: []
+  
+  /api/user/{userId}:
+    get:
+      tags:
+        - user
+      summary: Get user information
+      operationId: getUserInformation
+      parameters:
+        - name: userId
+          in: path
+          description: User whose information is going to be retrieved
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '403':
+          description: Forbidden - User does not have permission to access this resource
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+      security:
+        - bearerAuth: []
+    
+    put:
+      tags:
+        - user
+      summary: Update user information
+      operationId: updateUser
+      parameters:
+        - name: userId
+          in: path
+          description: User whose password is going to be updated
+          required: true
+          schema:
+            type: integer
+            format: int32
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateDTO'
+        required: true
+      responses:
+        '200':
+          description: User information updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDTO'
+        '400':
+          description: Invalid user supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorMapDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '403':
+          description: Forbidden - User does not have permission to update this resource
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+      security:
+        - bearerAuth: []
+
+  /api/user/{userId}/change-password:
+    put:
+      tags:
+        - user
+      summary: Update user password
+      operationId: updateUserPassword
+      parameters:
+        - name: userId
+          in: path
+          description: User whose password is going to be updated
+          required: true
+          schema:
+            type: integer
+            format: int32
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserPasswordDTO'
+        required: true
+      responses:
+        '200':
+          description: User passwaord updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDTO'
+        '400':
+          description: Invalid password supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorMapDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '403':
+          description: Forbidden - User does not have permission to update this password
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+      security:
+        - bearerAuth: []
+
+  /api/events:
+    get:
+      tags:
+        - event
+      summary: Get the information of the events where the user is registered
+      operationId: getEvents
+      parameters:
+        - name: page
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: sortBy
+          in: query
+          required: false
+          description: Sort field
+          schema:
+            type: string
+            default: date
+        - name: sortDir
+          in: query
+          required: false
+          description: Sort order
+          schema:
+            type: string
+            default: asc
+            enum:
+              - asc
+              - desc
+        - name: search
+          in: query
+          required: false
+          description: Search filter
+          schema:
+            type: string
+        - name: userId
+          in: query
+          required: true
+          description: User ID to filter events
+          schema:
+            type: integer
+            format: int32
+        - name: role
+          in: query
+          required: true
+          description: User role to filter events
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of events
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPaginationDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+      security:
+        - bearerAuth: []
+  
+    post:
+      tags:
+        - event
+      summary: Create a new event plus a host ticket for the user
+      operationId: createEvent
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUpdateEventDTO'
+        required: true
+      responses:
+        '200':
+          description: Event created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventDTO'
+        '400':
+          description: Invalid event data supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorMapDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+      security:
+        - bearerAuth: []
+
+  /api/events/{eventCode}:
+    get:
+      tags:
+        - event
+      summary: Get event information by event code
+      operationId: getEventByCode
+      parameters:
+        - name: eventCode
+          in: path
+          description: Code of the event. Cannot be empty.
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Event found successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '404':
+          description: Event not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+      security:
+        - bearerAuth: []
+    
+    put:
+      tags:
+        - event
+      summary: Update event information
+      operationId: updateEvent
+      parameters:
+        - name: eventCode
+          in: path
+          description: Code of the event. Cannot be empty.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUpdateEventDTO'
+        required: true
+      responses:
+        '200':
+          description: Event updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventDTO'
+        '400':
+          description: Invalid event data supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorMapDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '403':
+          description: Forbidden - Only the event host can update this event
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '404':
+          description: Event not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+      security:
+        - bearerAuth: []
+
+  /api/events/enrollment:
+    post:
+      tags:
+        - ticket
+      summary: Enroll a user in an event and create a ticket for him
+      operationId: enrollUserInEvent
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EnrollUserDTO'
+        required: true
+      responses:
+        '200':
+          description: User registered in the event successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TicketDTO'
+        '400':
+          description: Invalid event code or user data supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorMapDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '404':
+          description: Event not found or user not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+      security:
+        - bearerAuth: []
+  
+  /api/events/{eventCode}/tickets:
+    get:
+      tags:
+        - ticket
+      summary: Get all the tickets registered for an event
+      operationId: getEventTickets
+      parameters:
+        - name: eventCode
+          in: path
+          description: Code of the event. Cannot be empty.
+          required: true
+          schema:
+            type: string
+            minLength: 6
+            maxLength: 6
+            pattern: '^[A-Z0-9]+$'
+        - name: page
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: sortBy
+          in: query
+          required: false
+          description: Sort field
+          schema:
+            type: string
+            default: ticketId
+        - name: sortDir
+          in: query
+          required: false
+          description: Sort order
+          schema:
+            type: string
+            default: asc
+            enum:
+              - asc
+              - desc
+        - name: search
+          in: query
+          required: false
+          description: Search filter for tickets by user email or name, or guest number.
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of tickets
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPaginationDTO'
+        '400':
+          description: Invalid event code
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorMapDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '403':
+          description: Forbidden - Only the event host can view the tickets
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '404':
+          description: Event not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+      security:
+        - bearerAuth: []
+
+  /api/events/{eventCode}/tickets/{ticketId}:
+    get:
+      tags:
+        - ticket
+      summary: Get the information of the specified event where the user is registered and the ticket information
+      operationId: getEventInformation
+      parameters:
+        - name: eventCode
+          in: path
+          description: Code of the event. Cannot be empty.
+          required: true
+          schema:
+            type: string
+        - name: ticketId
+          in: path
+          description: Code of the ticket. Cannot be empty.
+          required: true
+          schema:
+            type: integer
+            format: int32
+        - name: userId
+          in: query
+          description: Code of the user. Cannot be empty.
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Event found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventTicketDTO'
+        '400':
+          description: Invalid event code. The API checks if the user is registered in the event
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorMapDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '404':
+          description: Event or user not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+      security:
+        - bearerAuth: []
+
+    put:
+      tags:
+        - ticket
+      summary: Update ticket information
+      operationId: updateTicket
+      parameters:
+        - name: eventCode
+          in: path
+          description: Code of the event. Cannot be empty.
+          required: true
+          schema:
+            type: string
+        - name: ticketId
+          in: path
+          description: Ticket to be updated
+          required: true
+          schema:
+            type: integer
+            format: int32
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTicketDTO'
+        required: true
+      responses:
+        '200':
+          description: Ticket updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventTicketDTO'
+        '400':
+          description: Invalid ticket data supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorMapDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '403':
+          description: Forbidden - User can only update their own ticket or must be event host
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '404':
+          description: Ticket not found or event not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+      security:
+        - bearerAuth: []
+
+  /api/events/{eventCode}/gifts:
+    get:
+      tags:
+        - gift
+      summary: Get the list of gifts of an event
+      operationId: getGifts
+      parameters:
+        - name: eventCode
+          in: path
+          description: Code of the event. Cannot be empty.
+          required: true
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: true
+          schema:
+            type: integer
+            format: int32
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            format: int32
+        - name: sortBy
+          in: query
+          required: false
+          description: Sort field
+          schema:
+            type: string
+            default: giftId
+        - name: sortDir
+          in: query
+          required: false
+          description: Sort order
+          schema:
+            type: string
+            default: asc
+            enum:
+              - asc
+              - desc
+        - name: search
+          in: query
+          required: false
+          description: Search filter
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of gifts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultPaginationDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+      security:
+        - bearerAuth: []
+
+    post:
+      tags:
+        - gift
+      summary: Create gift 
+      operationId: createGift
+      parameters:
+        - name: eventCode
+          in: path
+          description: Code of the event. Cannot be empty.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GiftCreateDTO'
+        required: true
+      responses:
+        '200':
+          description: Gift created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GiftDTO'
+        '400':
+          description: Invalid gift supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorMapDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '403':
+          description: Forbidden - User must be registered in the event to create a gift
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '404':
+          description: Event not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+      security:
+        - bearerAuth: []
+
+  /api/events/{eventCode}/gifts/{giftId}:
+    get:
+      tags:
+        - gift
+      summary: Get the information of the specified gift
+      operationId: getGiftInformation
+      parameters:
+        - name: eventCode
+          in: path
+          description: Code of the event. Cannot be empty.
+          required: true
+          schema:
+            type: string
+        - name: giftId
+          in: path
+          description: Id of the gift. Cannot be empty.
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Gift found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GiftExtendedDTO'
+        '400':
+          description: Invalid gift code. The API checks if the user is registered in the event where the gift is from
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorMapDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '404':
+          description: Gift not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+      security:
+        - bearerAuth: []
+
+    post:
+      tags:
+        - gift
+      summary: Register gift contribution or update a previous one
+      operationId: createUpdateGiftContribution
+      parameters:
+        - name: eventCode
+          in: path
+          description: Code of the event. Cannot be empty.
+          required: true
+          schema:
+            type: string
+        - name: giftId
+          in: path
+          description: Gift to be updated
+          required: true
+          schema:
+            type: integer
+            format: int32
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserGiftDTO'
+        required: true
+      responses:
+        '200':
+          description: Gift updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GiftExtendedDTO'
+        '400':
+          description: Invalid gift supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorMapDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '403':
+          description: Forbidden - User must be registered in the event to contribute to a gift
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '404':
+          description: Gift not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+      security:
+        - bearerAuth: []
+
+    put:
+      tags:
+        - gift
+      summary: Update gift information
+      operationId: updateGift
+      parameters:
+        - name: eventCode
+          in: path
+          description: Code of the event. Cannot be empty.
+          required: true
+          schema:
+            type: string
+        - name: giftId
+          in: path
+          description: Gift to be updated
+          required: true
+          schema:
+            type: integer
+            format: int32
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GiftUpdateDTO'
+        required: true
+      responses:
+        '200':
+          description: Gift updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GiftExtendedDTO'
+        '400':
+          description: Invalid gift supplied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorMapDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '403':
+          description: Forbidden - Only the event host or the gift creator can update gifts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '404':
+          description: Gift not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+      security:
+        - bearerAuth: []
+
+    delete:
+      tags:
+        - gift
+      summary: Delete gift
+      operationId: deleteGift
+      parameters:
+        - name: eventCode
+          in: path
+          description: Code of the event. Cannot be empty.
+          required: true
+          schema:
+            type: string
+        - name: giftId
+          in: path
+          description: Gift to be deleted
+          required: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          description: Gift deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GiftDTO'
+        '400':
+          description: Invalid gift code
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorMapDTO'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '403':
+          description: Forbidden - Only the event host can delete gifts
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '404':
+          description: Gift not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResultErrorDTO'
+      security:
+        - bearerAuth: []
+
+components:
+  schemas:    
+    UserDTO:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int32
+        email:
+          type: string
+        password:
+          type: string
+        username:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        phoneNumber:
+          type: string
+    
+    UserIdDTO:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int32
+        role:
+          type: string
+    
+    UserCreateDTO:
+      type: object
+      required:
+        - email
+        - password
+        - username
+        - firstName
+        - lastName
+      properties:
+        email:
+          type: string
+          maxLength: 50
+        password:
+          type: string
+          maxLength: 25
+        username:
+          type: string
+          maxLength: 25
+        firstName:
+          type: string
+          maxLength: 20
+        lastName:
+          type: string
+          maxLength: 50
+        phoneNumber:
+          type: string
+          maxLength: 15
+    
+    UserUpdateDTO:
+      type: object
+      properties:
+        firstName:
+          type: string
+          maxLength: 20
+        lastName:
+          type: string
+          maxLength: 50
+        phoneNumber:
+          type: string
+          maxLength: 15
+
+    UserForgottenPassword:
+      type: object
+      properties:
+        email:
+          type: string
+          maxLength: 50
+        username:
+          maxLength: 25
+        newPassword:
+          type: string
+          maxLength: 25
+        newPasswordConfirm:
+          type: string
+          maxLength: 25
+
+    UserPasswordDTO:
+      type: object
+      properties:
+        password:
+          type: string
+          maxLength: 25
+        newPassword:
+          type: string
+          maxLength: 25
+        newPasswordConfirm:
+          type: string
+          maxLength: 25
+    
+    EventDTO:
+      type: object
+      properties:
+        eventId:
+          type: integer
+          format: int32
+        eventCode:
+          type: string
+        eventName:
+          type: string
+        description:
+          type: string
+        place:
+          type: string
+        date:
+          type: string
+          format: date-time
+          example: "2025-05-10T14:30:00"
+        status:
+          type: string
+
+    EventWithTicketDTO:
+      type: object
+      properties:
+        eventId:
+          type: integer
+          format: int32
+        eventCode:
+          type: string
+        eventName:
+          type: string
+        description:
+          type: string
+        place:
+          type: string
+        date:
+          type: string
+          format: date-time
+          example: "2025-05-10T14:30:00"
+        status:
+          type: string
+        ticketId:
+          type: integer
+
+    CreateUpdateEventDTO:
+      type: object
+      properties:
+        eventCode:
+          type: string
+          minLength: 6
+          maxLength: 6
+        eventName:
+          type: string
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 200
+        place:
+          type: string
+          maxLength: 150
+        date:
+          type: string
+          format: date-time
+          example: "2025-05-10T14:30:00"
+        status:
+          type: string
+          maxLength: 20
+
+    TicketDTO:
+      type: object
+      properties:
+        ticketId:
+          type: integer
+          format: int32
+        eventId:
+          $ref: '#/components/schemas/EventDTO'
+        userId:
+          $ref: '#/components/schemas/UserDTO'
+        role:
+          type: string
+        guestNumber:
+          type: integer
+          format: int32
+        invitationConfirmation:
+          type: boolean
+        assistConfirmation:
+          type: boolean
+        notes:
+          type: string
+
+    EventTicketDTO:
+      type: object
+      properties:
+        event:
+          $ref: '#/components/schemas/EventDTO'
+        ticket:
+          $ref: '#/components/schemas/TicketDTO'
+
+    UpdateTicketDTO:
+      type: object
+      properties:
+        role:
+          type: string
+        guestNumber:
+          type: integer
+          format: int32
+        invitationConfirmation:
+          type: boolean
+        assistConfirmation:
+          type: boolean
+        notes:
+          type: string
+          maxLength: 500
+    
+    EnrollUserDTO:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int32
+        eventCode:
+          type: string
+          minLength: 6
+          maxLength: 6
+          pattern: '^[A-Z0-9]+$'
+        role:
+          type: string
+        guestNumber:
+          type: integer
+          format: int32
+        notes:
+          type: string
+          maxLength: 500
+        
+    GiftDTO:
+      type: object
+      properties:
+        giftId:
+          type: integer
+          format: int32
+        eventId:
+          type: integer
+          format: int32
+        name:
+          type: string
+        price:
+          type: number
+          format: double
+        collected:
+          type: number
+          format: double
+        creationUser:
+          type: string
+        createdByHost:
+          type: boolean
+        paidInFull:
+          type: boolean
+    
+    GiftExtendedDTO:
+      type: object
+      properties:
+        giftId:
+          type: integer
+          format: int32
+        eventId:
+          type: integer
+          format: int32
+        name:
+          type: string
+        price:
+          type: number
+          format: double
+        details:
+          type: string
+        url:
+          type: string
+        image:
+          type: object
+        collected:
+          type: number
+          format: double
+        creationUser:
+          type: string
+        createdByHost:
+          type: boolean
+        paidInFull:
+          type: boolean
+        userContributionList:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserGiftContributionDTO'
+
+    UserGiftContributionDTO:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int32
+        username:
+          type: string
+        email:
+          type: string
+        phoneNumber:
+          type: string
+        amount:
+          type: number
+          format: double
+    
+    GiftCreateDTO:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        price:
+          type: number
+          format: double
+        details:
+          type: string
+          maxLength: 500
+        url:
+          type: string
+          maxLength: 500
+        image:
+          type: object
+        creationUser:
+          type: string
+    
+    GiftUpdateDTO:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+        price:
+          type: number
+          format: double
+        details:
+          type: string
+          maxLength: 500
+        url:
+          type: string
+          maxLength: 500
+        image:
+          type: object
+
+    UserGiftDTO:
+      type: object
+      properties:
+        giftId:
+          type: integer
+          format: int32
+        userId:
+          type: integer
+          format: int32
+        amount:
+          type: number
+          format: double
+
+    SearchDTO:
+      type: object
+      properties:
+        search:
+          type: string
+
+    ResultErrorDTO:
+      type: object
+      properties:
+        message:
+          type: string
+
+    ResultErrorMapDTO:
+      type: object
+      properties:
+        errors:
+          type: object
+          additionalProperties:
+            type: string
+
+    PaginationDTO:
+      type: object
+      properties:
+        size:
+          type: integer
+          format: int32
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+          format: int32
+        number:
+          type: integer
+          format: int32
+
+    ResultPaginationDTO:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+        page:
+          $ref: '#/components/schemas/PaginationDTO'
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

@@ -1,0 +1,104 @@
+server:
+  port: 8090
+  # port: 8443
+  # ssl:
+  #   key-store: classpath:keystore.jks
+  #   key-store-password: password
+  #   key-password: secret
+
+spring:
+  profiles:
+    active: dev
+
+---
+# Configuración para desarrollo local
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_schema: '"public"'
+    hibernate:
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    show-sql: true
+
+  sql:
+    init:
+      platform: postgres
+
+logging:
+  level:
+    root: WARN
+    "[org.springframework.web]": WARN
+    "[org.springframework.boot]": WARN
+    "[org.springframework.security]": WARN
+    "[org.hibernate]": WARN
+    "[org.hibernate.SQL]": ERROR
+    "[org.hibernate.type.descriptor.sql.BasicBinder]": ERROR
+    "[com.zaxxer.hikari]": WARN
+    "[io.netty]": ERROR
+    "[reactor.netty]": ERROR
+    "[org.apache.catalina]": ERROR
+    "[org.apache.coyote]": ERROR
+    "[org.apache.tomcat]": ERROR
+    eventManager: INFO
+    "[eventManager.logger]": ERROR
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+---
+# Configuración para despliegue en AWS
+spring:
+  config:
+    activate:
+      on-profile: aws
+
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${RDS_ENDPOINT}
+    username: ${RDS_USERNAME}
+    password: ${RDS_PASSWORD}
+
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        default_schema: '"public"'
+    hibernate:
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    show-sql: false
+
+  sql:
+    init:
+      platform: postgres
+
+aws:
+  s3:
+    bucket-name: ${S3_BUCKET_NAME}
+    region: ${AWS_REGION}
+
+logging:
+  level:
+    root: INFO
+    "[org.springframework.web]": INFO
+    "[org.springframework.boot]": INFO
+    "[org.springframework.security]": INFO
+    "[org.hibernate]": WARN
+    "[org.hibernate.SQL]": WARN
+    "[com.zaxxer.hikari]": WARN
+    eventManager: INFO
+    "[eventManager.logger]": INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%level] %logger{36} - %msg%n"

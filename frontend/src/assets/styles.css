@@ -1,0 +1,29 @@
+/* Variables globales de color */
+:root {
+  --primary-color: #5564eb; /* Azul Majorelle */
+  --primary-hover: #3d4fc9; /* Azul Majorelle oscuro para hover */
+  --error-color: red; /* Color para mensajes de error */
+  --success-color: green; /* Color para mensajes de éxito */
+  --white: white;
+  --border-color: #ccc;
+  --background-light: #f9f9f9;
+}
+
+/* Estilos globales */
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#app {
+  min-height: 100vh;
+}

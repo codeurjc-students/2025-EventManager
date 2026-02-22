@@ -82,16 +82,12 @@ public class GiftServiceImpl implements GiftService{
 	@Autowired
 	private TicketService ticketService;
 
-	// S3Service solo está disponible cuando el perfil 'aws' está activo
-	// En perfil 'dev', este campo será null
+	// S3Service está disponible en perfil 'dev' (MinIO) y 'aws' (AWS S3)
 	@Autowired(required = false)
 	private S3Service s3Service;
 
 	@Autowired
 	private AccessControlUtils accessControlUtils;
-
-	//@Autowired
-	//private AmazonS3 s3;
 
 	@Override
 	public GiftDTO createGift(String eventCode, GiftCreateDTO giftCreateDTO) {
@@ -113,10 +109,7 @@ public class GiftServiceImpl implements GiftService{
 			TicketDTO userTicket = ticketService.getTicketByEventAndUser(eventDTO.getEventId(), userDTO.getUserId());
 			boolean createdByHost = "HOST".equalsIgnoreCase(userTicket.getRole());
 
-			// Procesamiento de imagen para S3 (solo activo con perfil 'aws')
 			String imageS3Key = null;
-			/*
-			// DESCOMENTAR ESTE BLOQUE AL ACTIVAR PERFIL AWS
 			if (s3Service != null && giftCreateDTO.getImage() != null && !giftCreateDTO.getImage().toString().isEmpty()) {
 				try {
 					// Decodificar base64 recibido del frontend
@@ -146,17 +139,15 @@ public class GiftServiceImpl implements GiftService{
 					// Generar nombre de archivo seguro
 					String fileName = giftCreateDTO.getName().replaceAll("[^a-zA-Z0-9]", "_") + extension;
 					
-					// Subir a S3 y obtener la key
 					imageS3Key = s3Service.uploadImage(imageBytes, fileName, contentType);
-					log.info("Imagen subida exitosamente a S3: {}", imageS3Key);
+					log.info("Imagen subida exitosamente: {}", imageS3Key);
 					
 				} catch (Exception e) {
-					log.error("Error al subir imagen a S3: {}", e.getMessage());
+					log.error("Error al subir imagen: {}", e.getMessage());
 					// No fallar la creación del regalo si falla la subida de imagen
 					// La imagen simplemente no se guardará
 				}
 			}
-			*/
 
 			Gift gift = Gift.builder()
 					.event(event)
@@ -191,9 +182,7 @@ public class GiftServiceImpl implements GiftService{
 			Gift gift = giftRepository.findByGiftId(giftId).orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, Constantes.MESSAGE_GIFT_DOES_NOT_EXIST));
 			GiftExtendedDTO giftDto = giftMapper.convertGiftToGiftExtendedDTO(gift, event.getEventId());
 
-			// Generar URL firmada para la imagen si existe (solo en perfil AWS)
-			/*
-			// DESCOMENTAR ESTE BLOQUE AL ACTIVAR PERFIL AWS
+			// Generar URL firmada para la imagen si existe
 			if (s3Service != null && giftDto.getImage() != null && !giftDto.getImage().isEmpty()) {
 				String presignedUrl = s3Service.generatePresignedUrl(giftDto.getImage());
 				if (presignedUrl != null) {
@@ -201,7 +190,6 @@ public class GiftServiceImpl implements GiftService{
 					log.debug("URL firmada generada para imagen del regalo {}", giftId);
 				}
 			}
-			*/
 
 			// Obtenemos las contribuciones del regalo
 			giftDto.setUserContributionList(getGiftContributions(giftId));
@@ -282,9 +270,6 @@ public class GiftServiceImpl implements GiftService{
 			gift.setDetails(giftDTO.getDetails());
 			gift.setUrl(giftDTO.getUrl());
 			
-			// Procesamiento de nueva imagen para S3 (solo activo con perfil 'aws')
-			/*
-			// DESCOMENTAR ESTE BLOQUE AL ACTIVAR PERFIL AWS
 			if (s3Service != null && giftDTO.getImage() != null && !giftDTO.getImage().isEmpty()) {
 				try {
 					// Si el DTO contiene una imagen nueva (base64), procesarla
@@ -293,7 +278,7 @@ public class GiftServiceImpl implements GiftService{
 						// Eliminar imagen anterior si existe
 						if (gift.getImage() != null && !gift.getImage().isEmpty()) {
 							s3Service.deleteImage(gift.getImage());
-							log.info("Imagen anterior eliminada de S3: {}", gift.getImage());
+							log.info("Imagen anterior eliminada: {}", gift.getImage());
 						}
 						
 						// Decodificar base64
@@ -315,14 +300,14 @@ public class GiftServiceImpl implements GiftService{
 						String fileName = giftDTO.getName().replaceAll("[^a-zA-Z0-9]", "_") + extension;
 						String newImageS3Key = s3Service.uploadImage(imageBytes, fileName, contentType);
 						gift.setImage(newImageS3Key);
-						log.info("Nueva imagen subida a S3: {}", newImageS3Key);
+						log.info("Nueva imagen subida: {}", newImageS3Key);
 					}
 				} catch (Exception e) {
-					log.error("Error al actualizar imagen en S3: {}", e.getMessage());
+					log.error("Error al actualizar imagen: {}", e.getMessage());
 					// No fallar la actualización del regalo
 				}
 			}
-			*/
+			
 			gift.setPrice(giftDTO.getPrice());
 			
 			// Recalcular el collected desde las contribuciones existentes

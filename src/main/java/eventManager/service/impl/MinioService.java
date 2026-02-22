@@ -17,22 +17,22 @@ import java.util.Date;
 import java.util.UUID;
 
 /**
- * Implementación del servicio S3 para AWS en producción.
- * Solo se activa con el perfil 'aws'.
+ * Implementación del servicio S3 usando MinIO para desarrollo local.
+ * Solo se activa con el perfil 'dev'.
  */
 @Service
-@Profile("aws")
+@Profile("dev")
 @Slf4j
-public class S3ServiceImpl implements S3Service {
+public class MinioService implements S3Service {
 
     @Autowired
-    private AmazonS3 s3Client;
+    private AmazonS3 minioClient;
 
-    @Value("${aws.s3.bucket-name}")
+    @Value("${minio.bucket-name}")
     private String bucketName;
 
-    @Value("${aws.s3.region:eu-west-1}")
-    private String region;
+    @Value("${minio.endpoint}")
+    private String endpoint;
 
     @Override
     public String uploadImage(byte[] imageBytes, String fileName, String contentType) {
@@ -48,13 +48,13 @@ public class S3ServiceImpl implements S3Service {
             ByteArrayInputStream inputStream = new ByteArrayInputStream(imageBytes);
             PutObjectRequest putRequest = new PutObjectRequest(bucketName, s3Key, inputStream, metadata);
 
-            s3Client.putObject(putRequest);
+            minioClient.putObject(putRequest);
             
-            log.info("Imagen subida a S3: {}", s3Key);
+            log.info("Imagen subida a MinIO: {}", s3Key);
             return s3Key;
         } catch (Exception e) {
-            log.error("Error al subir imagen a S3: {}", e.getMessage(), e);
-            throw new RuntimeException("Error al subir imagen a S3", e);
+            log.error("Error al subir imagen a MinIO: {}", e.getMessage(), e);
+            throw new RuntimeException("Error al subir imagen a MinIO", e);
         }
     }
 
@@ -66,10 +66,14 @@ public class S3ServiceImpl implements S3Service {
         try {
             // URL firmada válida por 7 días
             Date expiration = new Date(System.currentTimeMillis() + (7L * 24 * 60 * 60 * 1000));
-            URL url = s3Client.generatePresignedUrl(bucketName, s3Key, expiration, HttpMethod.GET);
+            URL url = minioClient.generatePresignedUrl(bucketName, s3Key, expiration, HttpMethod.GET);
+            
+            // Para desarrollo local, podemos usar la URL directa de MinIO
+            // La URL firmada funcionará, pero también podemos hacer el objeto público
+            log.debug("Presigned URL generada: {}", url.toString());
             return url.toString();
         } catch (Exception e) {
-            log.error("Error al generar presigned URL: {}", e.getMessage(), e);
+            log.error("Error al generar presigned URL en MinIO: {}", e.getMessage(), e);
             return null;
         }
     }
@@ -80,11 +84,10 @@ public class S3ServiceImpl implements S3Service {
             return;
         }
         try {
-            s3Client.deleteObject(bucketName, s3Key);
-            log.info("Imagen eliminada de S3: {}", s3Key);
+            minioClient.deleteObject(bucketName, s3Key);
+            log.info("Imagen eliminada de MinIO: {}", s3Key);
         } catch (Exception e) {
-            log.error("Error al eliminar imagen de S3: {}", e.getMessage(), e);
+            log.error("Error al eliminar imagen de MinIO: {}", e.getMessage(), e);
         }
     }
 }
-

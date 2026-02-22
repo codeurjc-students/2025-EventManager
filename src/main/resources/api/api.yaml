@@ -1394,7 +1394,7 @@ components:
         url:
           type: string
         image:
-          type: object
+          type: string
         collected:
           type: number
           format: double
@@ -1441,7 +1441,7 @@ components:
           type: string
           maxLength: 500
         image:
-          type: object
+          type: string
         creationUser:
           type: string
     
@@ -1461,7 +1461,7 @@ components:
           type: string
           maxLength: 500
         image:
-          type: object
+          type: string
 
     UserGiftDTO:
       type: object

@@ -83,6 +83,48 @@ eventManager/
 
 ---
 
+## Almacenamiento de Imágenes
+
+El proyecto utiliza **MinIO** (compatible con S3) para desarrollo local.
+
+### Iniciar MinIO
+
+```bash
+docker-compose up -d
+```
+
+### Acceso:
+- **API**: http://localhost:9000
+- **Consola Web**: http://localhost:9001
+
+### Credenciales:
+- Usuario: `${MINIO_ACCESS_KEY}` (ver `.env.example`)
+- Contraseña: `${MINIO_SECRET_KEY}` (ver `.env.example`)
+
+El bucket `event-manager-images` se crea automáticamente al iniciar la aplicación con perfil `dev`.
+
+### Arquitectura
+
+```
+┌─────────────────┐
+│   S3Service     │  ← Interfaz común
+└─────────────────┘
+         ↑
+         │ implements
+    ┌────┴──────┐
+┌───┴────┐  ┌───┴─────────┐
+│MinioSvc│  │S3ServiceImpl│
+│@dev    │  │@aws         │
+└────────┘  └─────────────┘
+    │             │
+┌───┴────┐    ┌───┴────┐
+│MinIO   │    │AWS S3  │
+│Docker  │    │Cloud   │
+└────────┘    └────────┘
+```
+
+---
+
 ## Variables de Entorno (.env)
 
 Este proyecto utiliza variables de entorno principalmente para el **backend** (Spring Boot).

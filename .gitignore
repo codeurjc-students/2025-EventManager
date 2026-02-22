@@ -15,6 +15,9 @@ frontend/.vite/
 src/main/resources/static/
 src/main/resources/templates/
 
+# MinIO data (imágenes subidas)
+minio_data/
+
 # IDEs
 .idea/
 .vscode/

@@ -14,7 +14,6 @@ import eventManager.repository.EventRepository;
 import eventManager.service.EventService;
 import eventManager.service.TicketService;
 import eventManager.service.UserService;
-import jakarta.validation.Valid;
 import eventManager.search.EventSpecificationsBuilder;
 import eventManager.search.SearchCriteria;
 
@@ -215,7 +214,7 @@ public class EventServiceImpl implements EventService{
 	}
 
 	@Override
-	public EventDTO updateEvent(String eventCode, @Valid CreateUpdateEventDTO createUpdateEventDTO) {
+	public EventDTO updateEvent(String eventCode, CreateUpdateEventDTO createUpdateEventDTO) {
 		try {
 			// Validamos que el evento existe
 			Event existingEvent = eventRepository.findByEventCode(eventCode)

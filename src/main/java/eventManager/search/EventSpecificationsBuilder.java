@@ -13,7 +13,7 @@ public class EventSpecificationsBuilder {
 
     public Specification<Event> build(List<SearchCriteria> params) {
         if (params.isEmpty()) {
-            return null;
+            return (root, query, builder) -> builder.conjunction();
         }
 
         List<Specification<Event>> specs = params.stream()

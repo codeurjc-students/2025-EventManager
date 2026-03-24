@@ -5,6 +5,7 @@ import eventManager.entity.Gift;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.lang.Nullable;
 
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaBuilder.In;
@@ -22,7 +23,7 @@ public class GiftSpecification implements Specification<Gift>{
 	private SearchCriteria criteria;
 	
 	@Override
-	public Predicate toPredicate(Root<Gift> root, CriteriaQuery<?> query, CriteriaBuilder builder) {
+	public Predicate toPredicate(Root<Gift> root, @Nullable CriteriaQuery<?> query, CriteriaBuilder builder) {
 		
 		String value;
 		switch (criteria.getOperation()) {
@@ -68,8 +69,7 @@ public class GiftSpecification implements Specification<Gift>{
 				return builder.lessThanOrEqualTo(root.get(criteria.getKey()), (LocalDateTime) criteria.getValue());
 			
 		}
-				
-        return null;
+		throw new IllegalStateException("Operación de búsqueda no soportada: " + criteria.getOperation());
 		
 	}
 	

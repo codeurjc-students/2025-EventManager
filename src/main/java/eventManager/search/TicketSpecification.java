@@ -5,6 +5,7 @@ import eventManager.entity.Ticket;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.lang.Nullable;
 
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -19,7 +20,7 @@ public class TicketSpecification implements Specification<Ticket>{
 	private SearchCriteria criteria;
 	
 	@Override
-	public Predicate toPredicate(Root<Ticket> root, CriteriaQuery<?> query, CriteriaBuilder builder) {
+	public Predicate toPredicate(Root<Ticket> root, @Nullable CriteriaQuery<?> query, CriteriaBuilder builder) {
 		
 		switch (criteria.getOperation()) {
 			case Constantes.EQUAL:
@@ -39,8 +40,7 @@ public class TicketSpecification implements Specification<Ticket>{
 					}
 				}
 		}
-				
-        return null;
+		throw new IllegalStateException("Operación de búsqueda no soportada: " + criteria.getOperation());
 		
 	}
 	

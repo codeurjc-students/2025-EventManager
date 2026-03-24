@@ -1,5 +1,6 @@
 # Backend build outputs
 target/
+*.class
 .mvn/
 .settings/
 .classpath

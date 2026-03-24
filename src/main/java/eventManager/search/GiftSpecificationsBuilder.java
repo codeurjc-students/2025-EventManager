@@ -13,7 +13,7 @@ public class GiftSpecificationsBuilder {
 
     public Specification<Gift> build(List<SearchCriteria> params) {
         if (params.isEmpty()) {
-            return null;
+            return (root, query, builder) -> builder.conjunction();
         }
 
         List<Specification<Gift>> specs = params.stream()

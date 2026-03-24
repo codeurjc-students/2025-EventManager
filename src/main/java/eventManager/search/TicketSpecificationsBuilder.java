@@ -13,7 +13,7 @@ public class TicketSpecificationsBuilder {
 
     public Specification<Ticket> build(List<SearchCriteria> params) {
         if (params.isEmpty()) {
-            return null;
+            return (root, query, builder) -> builder.conjunction();
         }
 
         List<Specification<Ticket>> specs = params.stream()

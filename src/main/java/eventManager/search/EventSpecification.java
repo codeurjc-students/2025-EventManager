@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.lang.Nullable;
 
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaBuilder.In;
@@ -43,7 +44,7 @@ public class EventSpecification implements Specification<Event>{
 	}
 	
 	@Override
-	public Predicate toPredicate(Root<Event> root, CriteriaQuery<?> query, CriteriaBuilder builder) {
+	public Predicate toPredicate(Root<Event> root, @Nullable CriteriaQuery<?> query, CriteriaBuilder builder) {
 		
 		String value;
 		switch (criteria.getOperation()) {
@@ -85,8 +86,7 @@ public class EventSpecification implements Specification<Event>{
 				return builder.lessThanOrEqualTo(root.get(criteria.getKey()), dateTimeLE);
 			
 		}
-		
-        return null;
+		throw new IllegalStateException("Operación de búsqueda no soportada: " + criteria.getOperation());
 		
 	}
 

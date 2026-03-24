@@ -30,113 +30,180 @@
 		<jakarta-annotation.version>2.1.1</jakarta-annotation.version>
 		<hibernate-validator.version>8.0.1.Final</hibernate-validator.version>
 		<jjwt.version>0.12.6</jjwt.version>
-		<spring-cloud.version>2021.0.3</spring-cloud.version>
 		<aws-java-sdk-bom.version>1.12.283</aws-java-sdk-bom.version>
+		<aws-sdk-bom.version>2.25.67</aws-sdk-bom.version>
+		<selenium.version>4.27.0</selenium.version>
+		<webdrivermanager.version>5.9.2</webdrivermanager.version>
+		<jacoco.version>0.8.12</jacoco.version>
+		<skip.jacoco>false</skip.jacoco>
+		<skip.openapi.generate>false</skip.openapi.generate>
+		<skip.frontend.node.install>false</skip.frontend.node.install>
+		<skip.frontend.npm.install>false</skip.frontend.npm.install>
+		<skip.frontend.npm.build>false</skip.frontend.npm.build>
+		<skip.frontend.copy.resources>false</skip.frontend.copy.resources>
+		<selenium.includes>**/selenium/**/*Test.java</selenium.includes>
 	</properties>
 
 	<dependencies>
 
+		<!-- Exposición de métricas y health checks para observabilidad -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
 
+		<!-- API REST y capa web MVC -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
+		<!-- Persistencia JPA con Spring Data -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-jpa</artifactId>
 		</dependency>
-		<!-- DevTools comentado temporalmente porque causa problemas con clases generadas por MapStruct
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-devtools</artifactId>
-		</dependency>
-		-->
+		<!-- Seguridad de endpoints y autenticación -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
 		</dependency>
+		<!-- Soporte base de testing (JUnit, Mockito, Spring Test, etc.) -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!-- Utilidades de test para seguridad en pruebas MVC -->
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<!-- Pruebas E2E del frontend con Selenium -->
+		<dependency>
+			<groupId>org.seleniumhq.selenium</groupId>
+			<artifactId>selenium-java</artifactId>
+			<version>${selenium.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- Gestión automática de drivers de navegador para Selenium -->
+		<dependency>
+			<groupId>io.github.bonigarcia</groupId>
+			<artifactId>webdrivermanager</artifactId>
+			<version>${webdrivermanager.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<!-- Tests de API con DSL fluida para peticiones/respuestas -->
+		<dependency>
+			<groupId>io.rest-assured</groupId>
+			<artifactId>rest-assured</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<!-- Integración de RestAssured con MockMvc -->
+		<dependency>
+			<groupId>io.rest-assured</groupId>
+			<artifactId>spring-mock-mvc</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<!-- Esperas asíncronas robustas en pruebas -->
+		<dependency>
+			<groupId>org.awaitility</groupId>
+			<artifactId>awaitility</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<!-- Driver PostgreSQL para runtime -->
 		<dependency>
          	<groupId>org.postgresql</groupId>
          	<artifactId>postgresql</artifactId>
      	</dependency>
+		<!-- Mapeo entre entidades y DTOs -->
 		<dependency>
 			<groupId>org.mapstruct</groupId>
 			<artifactId>mapstruct</artifactId>
 			<version>1.6.3</version>
 		</dependency>
+		<!-- Reducción de boilerplate (getters/setters/builders, etc.) -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 			<optional>true</optional>
 		</dependency>
+		<!-- JWT: API de firma y validación de tokens -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-api</artifactId>
 			<version>${jjwt.version}</version>
 		</dependency>
+		<!-- JWT: implementación en runtime -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-impl</artifactId>
 			<version>${jjwt.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<!-- JWT: serialización/deserialización con Jackson -->
 		<dependency>
 			<groupId>io.jsonwebtoken</groupId>
 			<artifactId>jjwt-jackson</artifactId>
 			<version>${jjwt.version}</version>
 			<scope>runtime</scope>
 		</dependency>
+		<!-- UI de OpenAPI/Swagger -->
 		<dependency>
 			<groupId>org.springdoc</groupId>
 			<artifactId>springdoc-openapi-ui</artifactId>
 			<version>${spring-doc.version}</version>
 		</dependency>
+		<!-- Soporte para JsonNullable generado por OpenAPI -->
 		<dependency>
 			<groupId>org.openapitools</groupId>
-			<artifactId>jackson-databind-nullable</artifactId> <!-- Soporte para tipos nulos generados por OpenAPI -->
+			<artifactId>jackson-databind-nullable</artifactId>
 			<version>${jackson-databind.version}</version>
 		</dependency>
+		<!-- API de validación jakarta.* en modelos y DTOs -->
 		<dependency>
 			<groupId>jakarta.validation</groupId>
-			<artifactId>jakarta.validation-api</artifactId> <!-- Validación con anotaciones como @NotNull, @Size, etc. -->
+			<artifactId>jakarta.validation-api</artifactId>
 			<version>${jakarta-validation.version}</version>
 		</dependency>		
+		<!-- API de anotaciones jakarta.* (ej. @Generated) -->
 		<dependency>
 			<groupId>jakarta.annotation</groupId>
-			<artifactId>jakarta.annotation-api</artifactId> <!-- Para que @Generated y otras anotaciones estén disponibles -->
+			<artifactId>jakarta.annotation-api</artifactId>
 			<version>${jakarta-annotation.version}</version>
 		</dependency>
+		<!-- Implementación de validaciones Bean Validation -->
 		<dependency>
 			<groupId>org.hibernate.validator</groupId>
 			<artifactId>hibernate-validator</artifactId>
 			<version>8.0.1.Final</version>
 		</dependency>
-		<dependency>
-			<groupId>software.amazon.awssdk</groupId>
-			<artifactId>kms</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>software.amazon.awssdk</groupId>
-			<artifactId>sts</artifactId>
-		</dependency>
+		<!-- Dependencia AWS para IAM -->
 		<dependency>
 			<groupId>com.amazonaws</groupId>
 			<artifactId>aws-java-sdk-iam</artifactId>
 		</dependency>
+		<!-- Dependencia AWS para S3 (incluye compatibilidad actual con MinIO) -->
 		<dependency>
 			<groupId>com.amazonaws</groupId>
 			<artifactId>aws-java-sdk-s3</artifactId>
 		</dependency>
-		<!-- Spring DotEnv: Carga automática de variables desde archivo .env -->
+		<!-- Dependencia AWS para STS (roles y credenciales temporales) -->
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>sts</artifactId>
+		</dependency>
+		<!-- Dependencia AWS para KMS (cifrado/descifrado y gestión de claves) -->
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>kms</artifactId>
+		</dependency>
+		<!-- Dependencia AWS para Secrets Manager (gestión segura de secretos) -->
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>secretsmanager</artifactId>
+		</dependency>
+		<!-- Carga de variables desde .env en desarrollo -->
 		<dependency>
 			<groupId>me.paulschwarz</groupId>
 			<artifactId>spring-dotenv</artifactId>
@@ -153,17 +220,11 @@
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
+			<!-- BOM AWS SDK para alinear versiones de clientes cloud -->
 			<dependency>
 				<groupId>software.amazon.awssdk</groupId>
 				<artifactId>bom</artifactId>
-				<version>2.19.14</version>
-				<type>pom</type>
-				<scope>import</scope>
-			</dependency>
-			<dependency>
-				<groupId>org.springframework.cloud</groupId>
-				<artifactId>spring-cloud-dependencies</artifactId>
-				<version>${spring-cloud.version}</version>
+				<version>${aws-sdk-bom.version}</version>
 				<type>pom</type>
 				<scope>import</scope>
 			</dependency>
@@ -173,7 +234,37 @@
 	<build>
 		<finalName>eventManager</finalName>
 		<plugins>
-			<!-- Plugin de limpieza mejorado para evitar archivos corruptos -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>3.5.2</version>
+				<configuration>
+					<useModulePath>false</useModulePath>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>${jacoco.version}</version>
+				<configuration>
+					<skip>${skip.jacoco}</skip>
+				</configuration>
+				<executions>
+					<execution>
+						<id>prepare-agent</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-clean-plugin</artifactId>
@@ -207,10 +298,8 @@
 					<target>21</target>
 					<encoding>UTF-8</encoding>
 					<forceJavacCompilerUse>true</forceJavacCompilerUse>
-					<!-- Forzar recompilación completa para evitar clases corruptas -->
 					<useIncrementalCompilation>false</useIncrementalCompilation>
 					<annotationProcessorPaths>
-						<!-- IMPORTANTE: Lombok DEBE estar ANTES que MapStruct -->
 						<path>
 							<groupId>org.projectlombok</groupId>
 							<artifactId>lombok</artifactId>
@@ -230,7 +319,6 @@
 					<compilerArgs>
 						<compilerArg>-Amapstruct.defaultComponentModel=spring</compilerArg>
 						<compilerArg>-Amapstruct.verbose=true</compilerArg>
-						<!-- Forzar procesamiento completo de anotaciones -->
 						<compilerArg>-proc:full</compilerArg>
 					</compilerArgs>
 				</configuration>
@@ -239,6 +327,9 @@
 				<groupId>org.openapitools</groupId>
 				<artifactId>openapi-generator-maven-plugin</artifactId>
 				<version>${openapi-generator-maven-plugin.version}</version>
+				<configuration>
+					<skip>${skip.openapi.generate}</skip>
+				</configuration>
 				<executions>
 					<execution>
 						<goals>
@@ -255,11 +346,10 @@
 								<apiPackage>eventManager.api</apiPackage>
 								<modelPackage>eventManager.dto</modelPackage>
 								<serializableModel>true</serializableModel>
-								<!-- <dateLibrary>java8</dateLibrary> -->
 								<useTags>true</useTags>
 								<skipDefaultInterface>true</skipDefaultInterface>
-								<useJakartaEe>true</useJakartaEe> <!-- para jakarta.* en lugar de javax.* -->
-								<useSpringBoot3>true</useSpringBoot3> <!-- para Spring Boot 3.x y evitar javax-->
+								<useJakartaEe>true</useJakartaEe>
+								<useSpringBoot3>true</useSpringBoot3>
 								<additionalModelTypeAnnotations>@lombok.Builder @lombok.NoArgsConstructor @lombok.AllArgsConstructor</additionalModelTypeAnnotations>
 							</configOptions>
 							<typeMappings>
@@ -269,7 +359,6 @@
 					</execution>
 				</executions>
 			</plugin>
-			<!-- Plugins frontend -->
 			<plugin>
 				<groupId>com.github.eirslett</groupId>
 				<artifactId>frontend-maven-plugin</artifactId>
@@ -285,6 +374,7 @@
 							<goal>install-node-and-npm</goal>
 						</goals>
 						<configuration>
+							<skip>${skip.frontend.node.install}</skip>
 							<nodeVersion>v22.17.0</nodeVersion>
 							<npmVersion>10.9.2</npmVersion>
 						</configuration>
@@ -295,6 +385,7 @@
 							<goal>npm</goal>
 						</goals>
 						<configuration>
+							<skip>${skip.frontend.npm.install}</skip>
 							<arguments>install</arguments>
 						</configuration>
 					</execution>
@@ -304,12 +395,12 @@
 							<goal>npm</goal>
 						</goals>
 						<configuration>
+							<skip>${skip.frontend.npm.build}</skip>
 							<arguments>run build</arguments>
 						</configuration>
 					</execution>
 				</executions>
 			</plugin>
-			<!-- Plugin para copiar los archivos del frontend compilado -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-resources-plugin</artifactId>
@@ -322,6 +413,7 @@
 							<goal>copy-resources</goal>
 						</goals>
 						<configuration>
+							<skip>${skip.frontend.copy.resources}</skip>
 							<outputDirectory>${project.basedir}/src/main/resources/static</outputDirectory>
 							<resources>
 								<resource>
@@ -335,4 +427,53 @@
 			</plugin>
 		</plugins>
 	</build>
+
+	<profiles>
+		<profile>
+			<id>unit</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<configuration>
+							<excludes>
+								<exclude>**/selenium/**/*.java</exclude>
+							</excludes>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>selenium</id>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-surefire-plugin</artifactId>
+						<configuration>
+							<includes>
+								<include>${selenium.includes}</include>
+							</includes>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+		<profile>
+			<id>selenium-ci</id>
+			<properties>
+				<skip.jacoco>true</skip.jacoco>
+				<skip.openapi.generate>true</skip.openapi.generate>
+				<skip.frontend.node.install>true</skip.frontend.node.install>
+				<skip.frontend.npm.install>true</skip.frontend.npm.install>
+				<skip.frontend.npm.build>true</skip.frontend.npm.build>
+				<skip.frontend.copy.resources>true</skip.frontend.copy.resources>
+			</properties>
+		</profile>
+	</profiles>
 </project>

@@ -1,5 +1,8 @@
 # EventManager
 
+[![CI](https://github.com/codeurjc-students/2025-EventManager/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/codeurjc-students/2025-EventManager/actions/workflows/ci.yml)
+[![Cobertura JaCoCo](https://img.shields.io/badge/coverage-JaCoCo%20artifact-blue)](https://github.com/codeurjc-students/2025-EventManager/actions/workflows/ci.yml)
+
 > **Descripción**
 Plataforma de gestión de eventos con autenticación del usuario y gestión de: usuarios, eventos, entradas y regalos.
 
@@ -42,28 +45,38 @@ Plataforma de gestión de eventos con autenticación del usuario y gestión de: 
 Un único repositorio con:
 - **Backend** en la raíz (Spring Boot + Maven)
 - **Frontend** en `frontend/` (Vue + Vite)
+- **Tests** en `src/test/`
+- **Workflow** CI en `.github/workflows/ci.yml`
 
-Árbol:
+Árbol simplificado:
 
 ```text
 eventManager/
 ├─ pom.xml
 ├─ mvnw
 ├─ mvnw.cmd
+├─ docker-compose.yaml
+├─ .env.example
+├─ .gitignore
 ├─ src/
 │  ├─ main/
 │  │  ├─ java/
 │  │  │  └─ eventManager/
 │  │  └─ resources/
 │  │     ├─ api/
-│  │     │  └─ api.yaml
 │  │     ├─ application.yml
-│  │     ├─ static/
-│  │     └─ templates/
+│  │     └─ static/
 │  └─ test/
+│     ├─ java/
+│     │  └─ eventManager/
+│     │     ├─ security/
+│     │     ├─ service/
+│     │     ├─ web/
+│     │     └─ selenium/
+│     └─ resources/
 ├─ frontend/
 │  ├─ package.json
-│  ├─ vite.config.js
+│  ├─ vite.config.mjs
 │  ├─ index.html
 │  ├─ public/
 │  └─ src/
@@ -73,13 +86,29 @@ eventManager/
 │     ├─ stores/
 │     ├─ views/
 │     └─ main.ts
+├─ minio_data/
+└─ .github/
+	└─ workflows/
+		└─ ci.yml
 ```
 
 ---
 
-## Puertos por defecto:
+## Puertos por defecto
+
 - Frontend: `http://localhost:3000`
 - Backend: `http://localhost:8090`
+
+## Endpoints y documentación API
+
+- Base URL local: `http://localhost:8090`
+- Swagger UI: `http://localhost:8090/swagger-ui/index.html`
+
+---
+
+## Variables de Entorno (.env)
+
+Este proyecto utiliza variables de entorno principalmente para el **backend** (Spring Boot).
 
 ---
 
@@ -125,13 +154,48 @@ El bucket `event-manager-images` se crea automáticamente al iniciar la aplicaci
 
 ---
 
-## Variables de Entorno (.env)
+## Testing
 
-Este proyecto utiliza variables de entorno principalmente para el **backend** (Spring Boot).
+El proyecto incluye:
+- Tests unitarios (servicios, seguridad, excepciones)
+- Tests de controlador (WebMvc)
+- Tests de integración UI con Selenium (vistas de autenticación, home, eventos, usuarios, regalos y tickets)
 
----
+### Perfiles Maven
+- `unit`: perfil por defecto; excluye Selenium
+- `selenium`: ejecuta suites Selenium
+- `selenium-ci`: desactiva tareas pesadas para acelerar CI Selenium
 
-## Endpoints y documentación API
+### Ejecución habitual
+- Unit tests: `./mvnw -Punit test`
+- Selenium: `./mvnw -Pselenium,selenium-ci test`
+- Cobertura JaCoCo: `./mvnw -Punit verify`
 
-- Base URL (local): `http://localhost:8090`
-- Swagger UI: `http://localhost:8090/swagger-ui/index.html`
+### JaCoCo
+
+- Plugin: `jacoco-maven-plugin`.
+- `prepare-agent`: instrumenta durante tests.
+- `report` en fase `verify`: genera reportes.
+- Ficheros generados típicos:
+  - `target/jacoco.exec`
+  - `target/site/jacoco/index.html`
+  - `target/site/jacoco/jacoco.xml`
+
+Estos ficheros son artefactos de ejecución, no se versionan porque `target/` está ignorado en `.gitignore`.
+
+### Workflow de CI (`.github/workflows/ci.yml`)
+
+El pipeline está dividido en tres jobs principales:
+1. **unit**
+	- Ejecuta `./mvnw -B -Punit test`.
+	- Publica `target/surefire-reports/**` como artifact.
+
+2. **selenium** (matriz por suites)
+	- Levanta PostgreSQL como servicio.
+	- Arranca MinIO en el job.
+	- Ejecuta `./mvnw -B -Pselenium,selenium-ci -Dselenium.includes=... test`.
+	- Publica reportes de surefire y logs.
+
+3. **coverage**
+	- Ejecuta `./mvnw -B -Punit verify`.
+	- Publica `target/site/jacoco/**` y `jacoco.xml` como artifacts.

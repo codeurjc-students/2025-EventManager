@@ -25,6 +25,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.*;
 
@@ -79,6 +80,8 @@ class GiftServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        ReflectionTestUtils.setField(giftService, "maxImageSizeBytes", 5_242_880L);
+
         testEvent = Event.builder().eventId(1).eventCode("ABC123").build();
 
         testGift = Gift.builder()
@@ -168,6 +171,41 @@ class GiftServiceImplTest {
         CustomException ex = assertThrows(CustomException.class, () -> giftService.createGift("ABC123", createDTO));
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
         assertEquals(Constantes.MESSAGE_GIFT_ALREADY_EXISTS, ex.getMessage());
+    }
+
+    /**
+     * Verifica que crear un regalo con imagen que supera el tamaño máximo lanza BAD_REQUEST.
+     */
+    @Test
+    @DisplayName("createGift - Imagen demasiado grande")
+    void testCreateGift_ImageTooLarge() {
+        GiftCreateDTO createDTO = new GiftCreateDTO();
+        createDTO.setName("New Gift");
+        createDTO.setPrice(50.0);
+        createDTO.setCreationUser("testuser");
+
+        byte[] largeImage = new byte[10];
+        String base64 = java.util.Base64.getEncoder().encodeToString(largeImage);
+        createDTO.setImage("data:image/png;base64," + base64);
+
+        ReflectionTestUtils.setField(giftService, "maxImageSizeBytes", 5L);
+
+        when(eventService.getEvent("ABC123")).thenReturn(testEventDTO);
+        when(eventService.getEventByEventCode("ABC123")).thenReturn(testEvent);
+        doNothing().when(accessControlUtils).validateUserRegisteredInEvent(1);
+        when(giftRepository.existsByNameAndEvent_EventId("New Gift", 1)).thenReturn(false);
+
+        UserDTO userDTO = new UserDTO();
+        userDTO.setUserId(1);
+        when(userService.getUserInformationByUsername("testuser")).thenReturn(userDTO);
+        TicketDTO ticketDTO = new TicketDTO();
+        ticketDTO.setRole("HOST");
+        when(ticketService.getTicketByEventAndUser(1, 1)).thenReturn(ticketDTO);
+
+        CustomException ex = assertThrows(CustomException.class, () -> giftService.createGift("ABC123", createDTO));
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
+        assertEquals(Constantes.MESSAGE_IMAGE_TOO_LARGE, ex.getMessage());
+        verify(s3Service, never()).uploadImage(any(), anyString(), anyString());
     }
 
     /**
@@ -289,6 +327,34 @@ class GiftServiceImplTest {
     }
 
     /**
+     * Verifica que actualizar un regalo con imagen demasiado grande lanza BAD_REQUEST.
+     */
+    @Test
+    @DisplayName("updateGift - Imagen demasiado grande")
+    void testUpdateGift_ImageTooLarge() {
+        GiftUpdateDTO updateDTO = new GiftUpdateDTO();
+        updateDTO.setName("Updated Gift");
+        updateDTO.setPrice(150.0);
+
+        byte[] largeImage = new byte[10];
+        String base64 = java.util.Base64.getEncoder().encodeToString(largeImage);
+        updateDTO.setImage("data:image/png;base64," + base64);
+
+        ReflectionTestUtils.setField(giftService, "maxImageSizeBytes", 5L);
+
+        testGift.setImage(null);
+
+        when(eventService.getEvent("ABC123")).thenReturn(testEventDTO);
+        when(giftRepository.findByGiftId(1)).thenReturn(Optional.of(testGift));
+        doNothing().when(accessControlUtils).validateHostOrGiftCreator(1, "testuser");
+
+        CustomException ex = assertThrows(CustomException.class, () -> giftService.updateGift("ABC123", 1, updateDTO));
+        assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
+        assertEquals(Constantes.MESSAGE_IMAGE_TOO_LARGE, ex.getMessage());
+        verify(s3Service, never()).uploadImage(any(), anyString(), anyString());
+    }
+
+    /**
      * Verifica que intentar actualizar un regalo inexistente lanza NOT_FOUND.
      */
     @Test
@@ -348,8 +414,8 @@ class GiftServiceImplTest {
     @DisplayName("deleteGift - Eliminacion exitosa")
     void testDeleteGift_Success() {
         when(eventService.getEvent("ABC123")).thenReturn(testEventDTO);
-        doNothing().when(accessControlUtils).validateUserIsHost(1);
         when(giftRepository.findByGiftId(1)).thenReturn(Optional.of(testGift));
+        doNothing().when(accessControlUtils).validateHostOrGiftCreator(1, "testuser");
         when(giftMapper.convertGiftToGiftDTO(testGift, 1)).thenReturn(testGiftDTO);
 
         GiftDTO result = giftService.deleteGift("ABC123", 1);
@@ -366,7 +432,8 @@ class GiftServiceImplTest {
     @DisplayName("deleteGift - No es HOST")
     void testDeleteGift_NotHost() {
         when(eventService.getEvent("ABC123")).thenReturn(testEventDTO);
-        doThrow(new CustomException(HttpStatus.FORBIDDEN, Constantes.MESSAGE_USER_NOT_HOST)).when(accessControlUtils).validateUserIsHost(1);
+        when(giftRepository.findByGiftId(1)).thenReturn(Optional.of(testGift));
+        doThrow(new CustomException(HttpStatus.FORBIDDEN, Constantes.MESSAGE_GIFT_UPDATE_FORBIDDEN)).when(accessControlUtils).validateHostOrGiftCreator(1, "testuser");
 
         CustomException ex = assertThrows(CustomException.class, () -> giftService.deleteGift("ABC123", 1));
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
@@ -379,7 +446,6 @@ class GiftServiceImplTest {
     @DisplayName("deleteGift - Regalo no encontrado")
     void testDeleteGift_GiftNotFound() {
         when(eventService.getEvent("ABC123")).thenReturn(testEventDTO);
-        doNothing().when(accessControlUtils).validateUserIsHost(1);
         when(giftRepository.findByGiftId(999)).thenReturn(Optional.empty());
 
         CustomException ex = assertThrows(CustomException.class, () -> giftService.deleteGift("ABC123", 999));

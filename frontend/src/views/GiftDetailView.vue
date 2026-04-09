@@ -23,6 +23,15 @@
               Añadir aportación
             </button>
           </div>
+          <div class="actions-bar secondary-actions">
+            <button
+              class="action-btn delete-btn"
+              :disabled="!canEditGift"
+              @click="openDeletePopUp"
+            >
+              Eliminar regalo
+            </button>
+          </div>
 
           <!-- Información del regalo -->
           <table class="gift-info-table">
@@ -155,6 +164,22 @@
             </form>
           </div>
         </div>
+
+        <!-- PopUp para eliminar regalo -->
+        <div v-if="showDeletePopUp" class="popup-overlay" @click.self="closeDeletePopUp">
+          <div class="popup-content">
+            <div class="popup-header">
+              <h3>Eliminar regalo</h3>
+              <button class="close-button" @click="closeDeletePopUp">✕</button>
+            </div>
+            <p class="delete-confirm-text">¿Seguro que quieres eliminar este regalo? Esta acción no se puede deshacer.</p>
+            <div v-if="deleteGiftError" class="error-message-popup">{{ deleteGiftError }}</div>
+            <div class="popup-actions">
+              <button type="button" class="cancel-btn" @click="closeDeletePopUp">Cancelar</button>
+              <button type="button" class="delete-confirm-btn" @click="onDeleteGift">Aceptar</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </MainLayout>
@@ -162,8 +187,9 @@
 
 <script lang="ts">
 import { defineComponent, ref, onMounted, computed } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import { useGiftStore } from '../stores/gift.store';
+import { useTicketStore } from '../stores/ticket.store';
 import { useAuthStore } from '../stores/auth.store';
 import Loader from '../components/Loader.vue';
 import MainLayout from '../layouts/MainLayout.vue';
@@ -177,8 +203,10 @@ export default defineComponent({
   },
   setup() {
     const route = useRoute();
+    const router = useRouter();
     const giftStore = useGiftStore();
-    const authStore = useAuthStore() as { user: { value: UserDTO | null } };
+    const ticketStore = useTicketStore();
+    const authStore = useAuthStore() as { user: { value: UserDTO | null }, loadUserProfile: () => Promise<UserDTO> };
 
     const eventCode = route.params.eventCode as string;
     const giftId = Number(route.params.giftId);
@@ -203,13 +231,22 @@ export default defineComponent({
     const contributionAmount = ref<number | null>(null);
     const contributionError = ref<string | null>(null);
 
+    // Eliminar regalo
+    const showDeletePopUp = ref(false);
+    const deleteGiftError = ref<string | null>(null);
+
+    // Rol actual en el evento
+    const currentUserRole = ref<string | null>(null);
+    const currentUserTicketId = ref<number | null>(null);
+
     // Control de permisos: puede editar si es creador del regalo
     const canEditGift = computed(() => {
       const isCreator = authStore.user.value?.username &&
         giftStore.giftDetail.value?.creationUser &&
         authStore.user.value.username === giftStore.giftDetail.value.creationUser;
+      const isHost = currentUserRole.value === 'HOST';
       
-      return isCreator;
+      return isCreator || isHost;
     });
 
     // Cargar detalles del regalo
@@ -321,7 +358,64 @@ export default defineComponent({
       }
     };
 
-    onMounted(fetchGiftDetails);
+    const openDeletePopUp = () => {
+      showDeletePopUp.value = true;
+      deleteGiftError.value = null;
+    };
+
+    const closeDeletePopUp = () => {
+      showDeletePopUp.value = false;
+      deleteGiftError.value = null;
+    };
+
+    const onDeleteGift = async () => {
+      deleteGiftError.value = null;
+      try {
+        await giftStore.removeGift(eventCode, giftId);
+        closeDeletePopUp();
+        if (currentUserTicketId.value) {
+          router.push({
+            name: 'DetalleEvento',
+            params: { eventCode, ticketId: currentUserTicketId.value }
+          });
+        } else {
+          router.push({
+            name: 'EventGifts',
+            params: { eventCode }
+          });
+        }
+      } catch (err: any) {
+        deleteGiftError.value = err.response?.data?.message || 'Error al eliminar el regalo';
+      }
+    };
+
+    const loadCurrentUserRole = async () => {
+      try {
+        if (!authStore.user.value?.userId) {
+          await authStore.loadUserProfile();
+        }
+        const userId = authStore.user.value?.userId;
+        if (!userId) return;
+
+        const response = await ticketStore.fetchTickets(eventCode, {
+          page: 1,
+          pageSize: 1,
+          search: `userId.userId=${userId}`
+        });
+
+        if (response.data && response.data.length > 0) {
+          currentUserRole.value = response.data[0].role;
+          currentUserTicketId.value = response.data[0].ticketId;
+        }
+      } catch (err) {
+        console.error('Error al obtener el rol del usuario:', err);
+      }
+    };
+
+    onMounted(async () => {
+      await loadCurrentUserRole();
+      await fetchGiftDetails();
+    });
 
     return {
       giftStore,
@@ -340,6 +434,11 @@ export default defineComponent({
       contributionAmount,
       contributionError,
       onAddContribution,
+      showDeletePopUp,
+      openDeletePopUp,
+      closeDeletePopUp,
+      deleteGiftError,
+      onDeleteGift,
     };
   },
 });
@@ -386,6 +485,11 @@ export default defineComponent({
   flex-wrap: wrap;
 }
 
+.secondary-actions {
+  margin-top: -10px;
+  margin-bottom: 35px;
+}
+
 .action-btn {
   padding: 12px 24px;
   background-color: #5564eb;
@@ -406,6 +510,14 @@ export default defineComponent({
 .action-btn:disabled {
   background-color: #ccc;
   cursor: not-allowed;
+}
+
+.delete-btn {
+  background-color: #dc2626;
+}
+
+.delete-btn:hover:not(:disabled) {
+  background-color: #b91c1c;
 }
 
 .gift-info-table {
@@ -593,6 +705,13 @@ export default defineComponent({
   font-size: 14px;
 }
 
+.delete-confirm-text {
+  margin: 10px 0 20px 0;
+  color: #333;
+  text-align: center;
+  font-size: 15px;
+}
+
 .popup-actions {
   display: flex;
   gap: 15px;
@@ -631,6 +750,23 @@ export default defineComponent({
 
 .cancel-btn:hover {
   background: #bdbdbd;
+}
+
+.delete-confirm-btn {
+  background: #dc2626;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 12px 24px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 15px;
+  transition: all 0.3s;
+}
+
+.delete-confirm-btn:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
 }
 
 .popup-overlay {

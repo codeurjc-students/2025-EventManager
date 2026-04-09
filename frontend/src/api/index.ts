@@ -44,7 +44,7 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config;
 
     // Si el token ha expirado o no es válido (401 Unauthorized)
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if ((error.response?.status === 401 || error.response?.status === 403) && !originalRequest._retry) {
       if (isRefreshing) {
         // Si ya hay un refresh en progreso, añadir a la cola
         return new Promise((resolve, reject) => {
@@ -81,7 +81,10 @@ apiClient.interceptors.response.use(
         // Limpiar cualquier dato de sesión almacenado
         localStorage.removeItem('authUser');
         sessionStorage.clear();
-        
+
+        // Marcar sesión expirada para mostrar aviso en login
+        sessionStorage.setItem('sessionExpired', 'true');
+
         // Redirigir a la vista de inicio de sesión
         router.replace('/iniciar-sesion');
         

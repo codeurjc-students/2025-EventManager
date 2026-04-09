@@ -77,6 +77,7 @@ export const useGiftStore = () => {
       return response;
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Error deleting gift';
+      throw err;
     } finally {
       loading.value = false;
     }

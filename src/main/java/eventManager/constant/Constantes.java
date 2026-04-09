@@ -29,6 +29,8 @@ public class Constantes {
 	public static final String MESSAGE_FORBIDDEN_ACCESS = "No tienes permisos para acceder a este recurso";
 	public static final String MESSAGE_USER_NOT_HOST = "El usuario no es anfitrión del evento";
 	public static final String MESSAGE_GIFT_UPDATE_FORBIDDEN = "Solo el anfitrión del evento o el creador del regalo pueden actualizarlo";
+	public static final String MESSAGE_IMAGE_TOO_LARGE = "La imagen supera el tamaño máximo permitido";
+	public static final long GIFT_IMAGES_MAX_SIZE_BYTES = 5L * 1024 * 1024;
 
 	public static final String PATTERN_YYYY_MM_DD = "yyyy-MM-dd";
 

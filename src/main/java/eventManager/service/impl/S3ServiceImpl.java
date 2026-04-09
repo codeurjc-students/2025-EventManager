@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayInputStream;
+import java.net.URI;
 import java.net.URL;
 import java.util.Date;
 import java.util.UUID;
@@ -76,14 +77,38 @@ public class S3ServiceImpl implements S3Service {
 
     @Override
     public void deleteImage(String s3Key) {
-        if (s3Key == null || s3Key.isEmpty()) {
+        String normalizedKey = normalizeS3Key(s3Key);
+        if (normalizedKey == null || normalizedKey.isEmpty()) {
             return;
         }
         try {
-            s3Client.deleteObject(bucketName, s3Key);
-            log.info("Imagen eliminada de S3: {}", s3Key);
+            s3Client.deleteObject(bucketName, normalizedKey);
+            log.info("Imagen eliminada de S3: {}", normalizedKey);
         } catch (Exception e) {
             log.error("Error al eliminar imagen de S3: {}", e.getMessage(), e);
+        }
+    }
+
+    private String normalizeS3Key(String s3KeyOrUrl) {
+        if (s3KeyOrUrl == null || s3KeyOrUrl.isEmpty()) {
+            return null;
+        }
+        if (!s3KeyOrUrl.startsWith("http")) {
+            return s3KeyOrUrl;
+        }
+        try {
+            URI uri = URI.create(s3KeyOrUrl);
+            String path = uri.getPath();
+            if (path == null || path.isEmpty()) {
+                return s3KeyOrUrl;
+            }
+            String cleanPath = path.startsWith("/") ? path.substring(1) : path;
+            if (cleanPath.startsWith(bucketName + "/")) {
+                cleanPath = cleanPath.substring(bucketName.length() + 1);
+            }
+            return cleanPath;
+        } catch (Exception e) {
+            return s3KeyOrUrl;
         }
     }
 }

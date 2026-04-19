@@ -34,7 +34,7 @@
           <h3>Sesión expirada</h3>
           <button class="close-button" @click="closeSessionExpired">✕</button>
         </div>
-        <p class="popup-text">¿Vaya! Parace que su sesión ha expirado. Por favor vuelva a iniciar sesión</p>
+        <p class="popup-text">¡Vaya! Parece que su sesión ha expirado. Por favor vuelva a iniciar sesión.</p>
         <div class="popup-actions">
           <button type="button" class="btn-primary popup-btn" @click="closeSessionExpired">Entendido</button>
         </div>

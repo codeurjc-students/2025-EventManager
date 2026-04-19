@@ -26,7 +26,7 @@ public class UserController implements UserApi{
 
 	@Override
 	public ResponseEntity<UserDTO> getAuthenticatedUserProfile() {
-		log.debug("process=get-authenticated-user-profile");
+		log.info("process=get-authenticated-user-profile");
 		
 		// Obtener el usuario autenticado desde el SecurityContext
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -37,25 +37,25 @@ public class UserController implements UserApi{
 
 	@Override
 	public ResponseEntity<UserDTO> getUserInformationByUsername(@NotNull @Valid String username) {
-		log.debug("process=get-user-information");
+		log.info("process=get-user-information");
 		return new ResponseEntity<>(userService.getUserInformationByUsername(username), HttpStatus.OK);
 	}
 
 	@Override
 	public ResponseEntity<UserDTO> getUserInformation(Integer userId) {
-		log.debug("process=get-user-information");
+		log.info("process=get-user-information");
 		return new ResponseEntity<>(userService.getUserInformation(userId), HttpStatus.OK);
 	}
 
 	@Override
 	public ResponseEntity<UserDTO> updateUser(Integer userId, @Valid UserUpdateDTO updateUserDTO) {
-		log.debug("process=update-user");
+		log.info("process=update-user");
 		return new ResponseEntity<>(userService.updateUser(userId, updateUserDTO), HttpStatus.OK);
 	}
 
 	@Override
 	public ResponseEntity<UserDTO> updateUserPassword(Integer userId, @Valid UserPasswordDTO userPasswordDTO) {
-		log.debug("process=update-user-password");
+		log.info("process=update-user-password");
 		return new ResponseEntity<>(userService.updateUserPassword(userId, userPasswordDTO), HttpStatus.OK);
 	}
 	

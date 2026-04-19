@@ -1,0 +1,314 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: "EventManagerApplication"
+
+Parameters:
+  VpcName:
+    Type: String
+    Default: EventManagerApplicationVPC
+  MyIpCidr:
+    Description: Tu IP pública en CIDR (ej. 1.2.3.4/32).
+    Type: String
+    Default: 83.39.6.196/32
+  KeyName:
+    Description: Key pair RSA (según TXT)
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: EventManagerApplication
+  AmiSsmParameter:
+    Description: AMI AL2023 (según TXT)
+    Type: String
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-2023.11.20260406.2-kernel-6.1-x86_64
+  DbInstanceIdentifier:
+    Type: String
+    Default: eventmanager-application-db
+  DbInstanceClass:
+    Type: String
+    Default: db.t3.micro
+  DbName:
+    Type: String
+    Default: EventManagerDatabase
+  DbUsername:
+    Type: String
+    Default: admin
+  DbPassword:
+    Type: String
+    NoEcho: true
+    MinLength: 8
+    Default: password
+  S3BucketName:
+    Type: String
+    Default: event-manager-images-bucket
+  AppImage:
+    Type: String
+    Default: docker.io/user/eventmanagerapp
+  AppComposeArtifact:
+    Type: String
+    Default: docker.io/user/eventmanagerapp-compose:1.0.0
+
+Resources:
+  # VPC (AWS VPC)
+  EventsVpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: !Ref VpcName
+
+  # Internet Gateway (AWS VPC)
+  EventsInternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: igw-eventmanager-tfg
+
+  # VPC Gateway Attachment (AWS VPC)
+  EventsVpcGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref EventsVpc
+      InternetGatewayId: !Ref EventsInternetGateway
+
+  # Subnet pública (AWS VPC)
+  EventsPublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref EventsVpc
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: subnet-public-a
+
+  # Subnet privada DB A (AWS VPC)
+  EventsPrivateDbSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref EventsVpc
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      CidrBlock: 10.0.11.0/24
+      Tags:
+        - Key: Name
+          Value: subnet-private-db-a
+
+  # Subnet privada DB B (AWS VPC)
+  EventsPrivateDbSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref EventsVpc
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      CidrBlock: 10.0.12.0/24
+      Tags:
+        - Key: Name
+          Value: subnet-private-db-b
+
+  # Route table pública (AWS VPC)
+  EventsPublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref EventsVpc
+      Tags:
+        - Key: Name
+          Value: rt-public-eventmanager
+
+  # Ruta a Internet Gateway (AWS VPC)
+  EventsPublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: EventsVpcGatewayAttachment
+    Properties:
+      RouteTableId: !Ref EventsPublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref EventsInternetGateway
+
+  # Asociación subnet pública con route table (AWS VPC)
+  EventsPublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref EventsPublicSubnet
+      RouteTableId: !Ref EventsPublicRouteTable
+
+  # Bucket S3 para imágenes (Amazon S3)
+  EventsImageBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: !Ref S3BucketName
+      VersioningConfiguration:
+        Status: Enabled
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  # Security Group EC2 (Amazon EC2)
+  EventsEC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "SG for EC2: SSH + 8090"
+      VpcId: !Ref EventsVpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref MyIpCidr
+        - IpProtocol: tcp
+          FromPort: 8090
+          ToPort: 8090
+          CidrIp: !Ref MyIpCidr
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+
+  # Security Group RDS (Amazon EC2/VPC)
+  EventsRDSSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "SG for RDS: allow Postgres from EC2"
+      VpcId: !Ref EventsVpc
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref EventsEC2SecurityGroup
+
+  # Subnet Group para RDS (Amazon RDS)
+  EventsRDSSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: "Private subnets for RDS"
+      SubnetIds:
+        - !Ref EventsPrivateDbSubnetA
+        - !Ref EventsPrivateDbSubnetB
+
+  # Instancia RDS PostgreSQL (Amazon RDS)
+  EventsRDSInstance:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Delete
+    Properties:
+      DBInstanceIdentifier: !Ref DbInstanceIdentifier
+      DBInstanceClass: !Ref DbInstanceClass
+      AllocatedStorage: 20
+      DBName: !Ref DbName
+      Engine: postgres
+      MasterUsername: !Ref DbUsername
+      MasterUserPassword: !Ref DbPassword
+      MultiAZ: false
+      PubliclyAccessible: false
+      StorageEncrypted: false
+      BackupRetentionPeriod: 1
+      VPCSecurityGroups:
+        - !Ref EventsRDSSecurityGroup
+      DBSubnetGroupName: !Ref EventsRDSSubnetGroup
+
+  # IAM Role para EC2 (AWS IAM)
+  EventsEC2IAMRole:
+    Type: AWS::IAM::Role
+    DependsOn: EventsImageBucket
+    Properties:
+      RoleName: role-ec2-eventmanager-s3
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+        - PolicyName: "S3AccessSingleBucket"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: ListBucket
+                Effect: "Allow"
+                Action:
+                  - "s3:ListBucket"
+                  - "s3:GetBucketLocation"
+                Resource:
+                  - !Sub arn:aws:s3:::${S3BucketName}
+              - Sid: ObjectRW
+                Effect: "Allow"
+                Action:
+                  - "s3:GetObject"
+                  - "s3:PutObject"
+                  - "s3:DeleteObject"
+                Resource:
+                  - !Sub arn:aws:s3:::${S3BucketName}/*
+
+  # Instance Profile para EC2 (AWS IAM)
+  EventsEC2IAMProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: profile-ec2-eventmanager-s3
+      Roles:
+        - !Ref EventsEC2IAMRole
+
+  # Instancia EC2 (Amazon EC2)
+  EventsEC2Instance:
+    Type: AWS::EC2::Instance
+    DependsOn:
+      - EventsPublicSubnetRouteTableAssociation
+    Properties:
+      KeyName: !Ref KeyName
+      ImageId: !Sub "{{resolve:ssm:${AmiSsmParameter}}}"
+      InstanceType: t3.micro
+      IamInstanceProfile: !Ref EventsEC2IAMProfile
+      # Opcional (no mencionado en el roadmap): Detailed monitoring
+      # Monitoring: true
+      NetworkInterfaces:
+        - DeviceIndex: 0
+          AssociatePublicIpAddress: true
+          SubnetId: !Ref EventsPublicSubnet
+          GroupSet:
+            - !Ref EventsEC2SecurityGroup
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          dnf update -y
+          dnf install -y docker dnf-plugins-core
+          dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+          dnf config-manager --setopt=docker-ce-stable.baseurl=https://download.docker.com/linux/centos/9/x86_64/stable --save
+          dnf clean all
+          dnf makecache
+          dnf install -y docker-compose-plugin --setopt=install_weak_deps=False
+          systemctl enable docker
+          systemctl start docker
+          mkdir -p /opt/eventmanager
+          chown -R user:user /opt/eventmanager
+          cat > /opt/eventmanager/.env << 'EOF'
+          AWS_REGION=${AWS::Region}
+          RDS_ENDPOINT=jdbc:postgresql://${EventsRDSInstance.Endpoint.Address}:5432/${DbName}
+          RDS_USERNAME=${DbUsername}
+          RDS_PASSWORD=${DbPassword}
+          S3_BUCKET_NAME=${S3BucketName}
+          APP_IMAGE=${AppImage}
+          EOF
+          sudo docker compose --env-file /opt/eventmanager/.env -f oci://${AppComposeArtifact} up -d
+
+Outputs:
+  PublicDnsName:
+    Value: !GetAtt EventsEC2Instance.PublicDnsName
+    Description: Public DNS for EC2
+  AppUrl:
+    Value: !Sub "http://${EventsEC2Instance.PublicDnsName}:8090"
+    Description: EventManager public URL (port 8090)
+  RdsEndpoint:
+    Value: !GetAtt EventsRDSInstance.Endpoint.Address
+    Description: RDS endpoint address
+  S3Bucket:
+    Value: !Ref EventsImageBucket
+    Description: S3 bucket name

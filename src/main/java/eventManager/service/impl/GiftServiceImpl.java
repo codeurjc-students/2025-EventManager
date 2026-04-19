@@ -137,7 +137,7 @@ public class GiftServiceImpl implements GiftService{
 					String fileName = giftCreateDTO.getName().replaceAll("[^a-zA-Z0-9]", "_") + extension;
 					
 					imageS3Key = s3Service.uploadImage(imageBytes, fileName, contentType);
-					log.info("Imagen subida exitosamente: {}", imageS3Key);
+					log.debug("Imagen subida exitosamente: {}", imageS3Key);
 					
 				} catch (CustomException e) {
 					throw e;
@@ -277,7 +277,7 @@ public class GiftServiceImpl implements GiftService{
 						// Eliminar imagen anterior si existe
 						if (gift.getImage() != null && !gift.getImage().isEmpty()) {
 							s3Service.deleteImage(gift.getImage());
-							log.info("Imagen anterior eliminada: {}", gift.getImage());
+							log.debug("Imagen anterior eliminada: {}", gift.getImage());
 						}
 						
 						// Decodificar base64
@@ -296,7 +296,7 @@ public class GiftServiceImpl implements GiftService{
 						String fileName = giftDTO.getName().replaceAll("[^a-zA-Z0-9]", "_") + extension;
 						String newImageS3Key = s3Service.uploadImage(imageBytes, fileName, contentType);
 						gift.setImage(newImageS3Key);
-						log.info("Nueva imagen subida: {}", newImageS3Key);
+						log.debug("Nueva imagen subida: {}", newImageS3Key);
 					}
 				} catch (CustomException e) {
 					throw e;
@@ -344,7 +344,7 @@ public class GiftServiceImpl implements GiftService{
 			if (s3Service != null && gift.getImage() != null && !gift.getImage().isEmpty()) {
 				try {
 					s3Service.deleteImage(gift.getImage());
-					log.info("Imagen eliminada de S3: {}", gift.getImage());
+					log.debug("Imagen eliminada de S3: {}", gift.getImage());
 				} catch (Exception e) {
 					log.error("Error al eliminar imagen de S3: {}", e.getMessage());
 					// No fallar la eliminación del regalo si falla la eliminación de la imagen

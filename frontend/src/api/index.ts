@@ -1,7 +1,8 @@
 import axios from 'axios';
 import router from '../router';
 
-const API_URL = 'http://localhost:8090';
+// Usa VITE_API_URL si existe; si no, usa el mismo host/origen (producción)
+const API_URL = import.meta.env.VITE_API_URL ?? '';
 
 // Cliente para endpoints protegidos (requieren autenticación)
 const apiClient = axios.create({
@@ -209,8 +210,14 @@ export const getGiftDetail = async (eventCode: string, giftId: number) => {
   return response.data;
 };
 
-export const getGifts = async (eventCode: string, params: any) => {
-  const response = await apiClient.get(`/api/events/${eventCode}/gifts`, { params });
+export const getGifts = async (eventCode: string, params: any = {}) => {
+  const resolvedParams = {
+    ...params,
+    page: params.page ?? 1,
+    pageSize: params.pageSize ?? params.size ?? 10
+  };
+  delete resolvedParams.size;
+  const response = await apiClient.get(`/api/events/${eventCode}/gifts`, { params: resolvedParams });
   return response.data;
 };
 

@@ -58,8 +58,8 @@ export const useGiftStore = () => {
     loading.value = true;
     error.value = null;
     try {
-      await updateGift(eventCode, giftId, giftData);
-      const response = await fetchGifts(eventCode);
+      const response = await updateGift(eventCode, giftId, giftData);
+      giftDetail.value = response;
       return response;
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Error updating gift';

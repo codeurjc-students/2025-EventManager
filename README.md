@@ -109,6 +109,9 @@ eventManager/
 ## Variables de Entorno (.env)
 
 Este proyecto utiliza variables de entorno principalmente para el **backend** (Spring Boot).
+Se proporciona un fichero un fichero .env.example de referencia.
+
+> **Nota (pendiente)**: Si el frontend se sirve desde un dominio/puerto distinto al del backend (S3, Cloudfront, etc), será necesario ajustar la configuración CORS del backend para permitir ese origen.
 
 ---
 
@@ -199,3 +202,10 @@ El pipeline está dividido en tres jobs principales:
 3. **coverage**
 	- Ejecuta `./mvnw -B -Punit verify`.
 	- Publica `target/site/jacoco/**` y `jacoco.xml` como artifacts.
+
+---
+
+# Endpoint actual de la aplicación
+Debido a que no se está utilizando una IP dinámica en la instancia EC2 la IP pública de instancia cambiará en caso de apagarse
+
+http://54.216.141.113:8090/

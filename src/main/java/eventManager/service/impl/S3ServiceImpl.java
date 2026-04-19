@@ -51,7 +51,7 @@ public class S3ServiceImpl implements S3Service {
 
             s3Client.putObject(putRequest);
             
-            log.info("Imagen subida a S3: {}", s3Key);
+            log.debug("Imagen subida a S3: {}", s3Key);
             return s3Key;
         } catch (Exception e) {
             log.error("Error al subir imagen a S3: {}", e.getMessage(), e);
@@ -83,7 +83,7 @@ public class S3ServiceImpl implements S3Service {
         }
         try {
             s3Client.deleteObject(bucketName, normalizedKey);
-            log.info("Imagen eliminada de S3: {}", normalizedKey);
+            log.debug("Imagen eliminada de S3: {}", normalizedKey);
         } catch (Exception e) {
             log.error("Error al eliminar imagen de S3: {}", e.getMessage(), e);
         }

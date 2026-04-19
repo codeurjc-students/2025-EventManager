@@ -24,25 +24,25 @@ public class EventController implements EventApi{
 
 	@Override
 	public ResponseEntity<ResultPaginationDTO> getEvents(@NotNull @Valid Integer page, @NotNull @Valid Integer userId, @NotNull @Valid String role, @Valid Integer pageSize, @Valid String sortBy, @Valid String sortDir, @Valid String search) {
-		log.debug("process=get-events");
+		log.info("process=get-events");
 		return new ResponseEntity<>(eventService.getEvents(page, pageSize, sortBy, sortDir, search, userId, role), HttpStatus.OK);
 	}
 
 	@Override
 	public ResponseEntity<EventDTO> getEventByCode(String eventCode) {
-		log.debug("process=get-event-by-code eventCode={}", eventCode);
+		log.info("process=get-event-by-code eventCode={}", eventCode);
 		return new ResponseEntity<>(eventService.getEvent(eventCode), HttpStatus.OK);
 	}
 
 	@Override
 	public ResponseEntity<EventDTO> createEvent(@NotNull @Valid Integer userId, @Valid CreateUpdateEventDTO createUpdateEventDTO) {
-		log.debug("process=create-event");
+		log.info("process=create-event");
 		return new ResponseEntity<>(eventService.createEvent(userId, createUpdateEventDTO), HttpStatus.CREATED);
 	}
 
 	@Override
 	public ResponseEntity<EventDTO> updateEvent(String eventCode, @Valid CreateUpdateEventDTO createUpdateEventDTO) {
-		log.debug("process=update-event eventCode={}", eventCode);
+		log.info("process=update-event eventCode={}", eventCode);
 		return new ResponseEntity<>(eventService.updateEvent(eventCode, createUpdateEventDTO), HttpStatus.OK);
 	}
 		

@@ -373,17 +373,14 @@ export default defineComponent({
       try {
         await giftStore.removeGift(eventCode, giftId);
         closeDeletePopUp();
-        if (currentUserTicketId.value) {
-          router.push({
-            name: 'DetalleEvento',
-            params: { eventCode, ticketId: currentUserTicketId.value }
-          });
-        } else {
-          router.push({
-            name: 'EventGifts',
-            params: { eventCode }
-          });
+        if (!currentUserTicketId.value) {
+          deleteGiftError.value = 'No se pudo obtener la entrada del usuario para volver al detalle del evento.';
+          return;
         }
+        router.push({
+          name: 'DetalleEvento',
+          params: { eventCode, ticketId: currentUserTicketId.value }
+        });
       } catch (err: any) {
         deleteGiftError.value = err.response?.data?.message || 'Error al eliminar el regalo';
       }

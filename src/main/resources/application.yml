@@ -90,6 +90,16 @@ spring:
     init:
       platform: postgres
 
+server:
+  port: 8090
+  ssl:
+    enabled: true
+    key-store: ${SSL_KEYSTORE_PATH:/opt/eventmanager/certs/eventmanager.p12}
+    key-store-password: ${SSL_KEYSTORE_PASSWORD}
+    key-store-type: PKCS12
+    key-alias: ${SSL_KEY_ALIAS:tomcat}
+    key-password: ${SSL_KEY_PASSWORD:${SSL_KEYSTORE_PASSWORD}}
+
 aws:
   s3:
     bucket-name: ${S3_BUCKET_NAME}

@@ -27,37 +27,37 @@ public class GiftController implements GiftApi{
 
 	@Override
 	public ResponseEntity<GiftDTO> createGift(String eventCode, @Valid GiftCreateDTO giftCreateDTO) {
-		log.debug("process=create-gift");
+		log.info("process=create-gift");
 		return new ResponseEntity<>(giftService.createGift(eventCode, giftCreateDTO), HttpStatus.CREATED);
 	}
 
 	@Override
 	public ResponseEntity<GiftExtendedDTO> getGiftInformation(String eventCode, Integer giftId) {
-		log.debug("process=get-gift-information");
+		log.info("process=get-gift-information");
 		return new ResponseEntity<>(giftService.getGiftInformation(eventCode, giftId), HttpStatus.OK);
 	}
 
 	@Override
 	public ResponseEntity<ResultPaginationDTO> getGifts(String eventCode, @NotNull @Valid Integer page, @Valid Integer pageSize, @Valid String sortBy, @Valid String sortDir, @Valid String search) {
-		log.debug("process=get-gifts");
+		log.info("process=get-gifts");
 		return new ResponseEntity<>(giftService.getGifts(eventCode, page, pageSize, sortBy, sortDir, search), HttpStatus.OK);
 	}
 
 	@Override
 	public ResponseEntity<GiftExtendedDTO> updateGift(String eventCode, Integer giftId, @Valid GiftUpdateDTO giftUpdateDTO) {
-		log.debug("process=update-gift");
+		log.info("process=update-gift");
 		return new ResponseEntity<>(giftService.updateGift(eventCode, giftId, giftUpdateDTO), HttpStatus.OK);
 	}
 
 	@Override
 	public ResponseEntity<GiftDTO> deleteGift(String eventCode, Integer giftId) {
-		log.debug("process=delete-gift");
+		log.info("process=delete-gift");
 		return new ResponseEntity<>(giftService.deleteGift(eventCode, giftId), HttpStatus.OK);
 	}
 
 	@Override
 	public ResponseEntity<GiftExtendedDTO> createUpdateGiftContribution(String eventCode, Integer giftId, @Valid UserGiftDTO userGiftDTO) {
-		log.debug("process=create-update-gift-contribution");
+		log.info("process=create-update-gift-contribution");
 		return new ResponseEntity<>(giftService.createUpdateGiftContribution(eventCode, giftId, userGiftDTO), HttpStatus.CREATED);
 	}
 	

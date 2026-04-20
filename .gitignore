@@ -38,6 +38,8 @@ Thumbs.db
 .env
 .env.local
 .env.*.local
+.env.aws
+.env.aws.*
 
 # Security & Certificates
 *.jks
@@ -55,3 +57,6 @@ truststore*
 *.bak
 *.swp
 *~
+
+# Docker image exports
+*.tar

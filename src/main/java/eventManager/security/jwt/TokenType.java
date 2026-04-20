@@ -4,8 +4,8 @@ import java.time.Duration;
 
 public enum TokenType {
 
-    ACCESS(Duration.ofMinutes(5), "AuthToken"),
-    REFRESH(Duration.ofDays(7), "RefreshToken");
+    ACCESS(Duration.ofMinutes(10), "AuthToken"),
+    REFRESH(Duration.ofHours(4), "RefreshToken");
 
     // Token lifetime in seconds
     public final Duration duration;

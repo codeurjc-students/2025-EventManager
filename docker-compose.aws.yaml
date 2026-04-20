@@ -1,0 +1,19 @@
+services:
+  eventmanager:
+    image: ${APP_IMAGE:-eventmanagerapp}
+    container_name: eventmanagerapp
+    restart: unless-stopped
+    ports:
+      - "443:8090"
+    volumes:
+      - /opt/eventmanager/certs:/opt/eventmanager/certs:ro
+    environment:
+      SPRING_PROFILES_ACTIVE: aws
+      RDS_ENDPOINT: ${RDS_ENDPOINT}
+      RDS_USERNAME: ${RDS_USERNAME}
+      RDS_PASSWORD: ${RDS_PASSWORD}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME}
+      AWS_REGION: ${AWS_REGION}
+      SSL_KEYSTORE_PATH: ${SSL_KEYSTORE_PATH:-/opt/eventmanager/certs/eventmanager.p12}
+      SSL_KEYSTORE_PASSWORD: ${SSL_KEYSTORE_PASSWORD}
+      SSL_KEY_ALIAS: ${SSL_KEY_ALIAS:-tomcat}

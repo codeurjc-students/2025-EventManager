@@ -25,25 +25,25 @@ public class TicketController implements TicketApi{
 
 	@Override
 	public ResponseEntity<EventTicketDTO> getEventInformation(String eventCode, Integer ticketId, Integer userId) {
-		log.debug("process=get-event-information");
+		log.info("process=get-event-information");
 		return new ResponseEntity<>(ticketService.getEventInformation(eventCode, ticketId, userId), HttpStatus.OK);
 	}
 
 	@Override
 	public ResponseEntity<ResultPaginationDTO> getEventTickets(String eventCode, Integer page, Integer pageSize, String sortBy, String sortDir, String search) {
-		log.debug("process=get-event-tickets");
+		log.info("process=get-event-tickets");
 		return new ResponseEntity<>(ticketService.getEventTickets(eventCode, page, pageSize, sortBy, sortDir, search), HttpStatus.OK);
 	}
 
 	@Override
 	public ResponseEntity<TicketDTO> enrollUserInEvent(@Valid EnrollUserDTO enrollUserInEvent) {
-		log.debug("process=enroll-user-in-event");
+		log.info("process=enroll-user-in-event");
 		return new ResponseEntity<>(ticketService.enrollUserInEvent(enrollUserInEvent), HttpStatus.CREATED);
 	}
 
 	@Override
 	public ResponseEntity<EventTicketDTO> updateTicket(String eventCode, Integer ticketId, @Valid UpdateTicketDTO updateTicketDTO) {
-		log.debug("process=update-ticket-information");
+		log.info("process=update-ticket-information");
 		return new ResponseEntity<>(ticketService.updateTicket(eventCode, ticketId, updateTicketDTO), HttpStatus.OK);
 	}
 

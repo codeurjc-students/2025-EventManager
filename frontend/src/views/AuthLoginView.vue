@@ -27,11 +27,24 @@
         </div>
       </div>
     </div>
+
+    <div v-if="showSessionExpired" class="popup-overlay" @click.self="closeSessionExpired">
+      <div class="popup-content">
+        <div class="popup-header">
+          <h3>Sesión expirada</h3>
+          <button class="close-button" @click="closeSessionExpired">✕</button>
+        </div>
+        <p class="popup-text">¡Vaya! Parece que su sesión ha expirado. Por favor vuelva a iniciar sesión.</p>
+        <div class="popup-actions">
+          <button type="button" class="btn-primary popup-btn" @click="closeSessionExpired">Entendido</button>
+        </div>
+      </div>
+    </div>
   </MainLayout>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth.store';
 
@@ -39,14 +52,27 @@ const username = ref('');
 const password = ref('');
 const router = useRouter();
 const auth = useAuthStore();
+const showSessionExpired = ref(false);
 
 const loginUser = async () => {
   const success = await auth.login(username.value, password.value);
   if (success) {
     // Redirigir a la página principal después de un login exitoso
+    sessionStorage.removeItem('sessionExpired');
     router.push('/');
   }
 };
+
+const closeSessionExpired = () => {
+  showSessionExpired.value = false;
+  sessionStorage.removeItem('sessionExpired');
+};
+
+onMounted(() => {
+  if (sessionStorage.getItem('sessionExpired') === 'true') {
+    showSessionExpired.value = true;
+  }
+});
 </script>
 
 <style scoped>
@@ -179,5 +205,78 @@ const loginUser = async () => {
 .forgot-password-link a:hover {
   color: #3d4fc9;
   text-decoration: underline;
+}
+
+.popup-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.popup-content {
+  background: white;
+  border-radius: 12px;
+  padding: 30px;
+  max-width: 520px;
+  width: 90%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.popup-header h3 {
+  margin: 0;
+  color: #333;
+  font-size: 22px;
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #999;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.close-button:hover {
+  color: #333;
+}
+
+.popup-text {
+  margin: 10px 0 20px 0;
+  color: #333;
+  text-align: center;
+  font-size: 15px;
+}
+
+.popup-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.popup-btn {
+  width: auto;
+  min-width: 140px;
 }
 </style>

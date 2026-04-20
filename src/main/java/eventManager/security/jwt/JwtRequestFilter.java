@@ -37,7 +37,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 		// Skip JWT validation for public endpoints
 		if (isPublicEndpoint(requestPath)) {
 			if (!requestPath.startsWith("/assets/") && !requestPath.startsWith("/static/")) {
-				log.info("Skipping JWT validation for public endpoint: {}", requestPath);
+				log.debug("Skipping JWT validation for public endpoint: {}", requestPath);
 			}
 			filterChain.doFilter(request, response);
 			return;
@@ -45,7 +45,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 		
 		try {
 			var claims = jwtTokenProvider.validateToken(request, true);
-			log.info("JWT Token validated successfully for user: {}", claims.getSubject());
+			log.debug("JWT Token validated successfully for user: {}", claims.getSubject());
 			var userDetails = userDetailsService.loadUserByUsername(claims.getSubject());
 
 			UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
@@ -88,7 +88,8 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 		// Public authentication API endpoints
 		if (requestPath.equals("/api/auth/register") ||
 			requestPath.equals("/api/auth/login") ||
-			requestPath.equals("/api/auth/forgot-password")) {
+			requestPath.equals("/api/auth/forgot-password") ||
+			requestPath.equals("/api/auth/refresh")) {
 			return true;
 		}
 		

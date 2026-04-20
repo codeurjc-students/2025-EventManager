@@ -61,7 +61,7 @@ public class RestSecurityConfig {
 						// PUBLIC ENDPOINTS - Test and diagnostic pages
 						.requestMatchers("/test", "/test.html", "/api/health").permitAll()
 						// PUBLIC ENDPOINTS - Authentication API endpoints (no JWT required)
-						.requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/forgot-password").permitAll()
+						.requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/forgot-password", "/api/auth/refresh").permitAll()
 						// PUBLIC ENDPOINTS - API documentation
 						.requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
 						// PRIVATE ENDPOINTS - All API routes require authentication (JWT in cookies)

@@ -143,7 +143,12 @@ export const useAuthStore = () => {
     } catch (err: any) {
       // Limpiar sesión si el token está expirado o es inválido
       console.error('Session validation failed:', err.response?.data?.message || err.message);
+      const hadSessionExpiredFlag = sessionStorage.getItem('sessionExpired') === 'true';
+      const isExpired = err.response?.status === 401 || err.response?.status === 403;
       await forceLogout();
+      if (isExpired || hadSessionExpiredFlag) {
+        sessionStorage.setItem('sessionExpired', 'true');
+      }
       return false;
     }
   };

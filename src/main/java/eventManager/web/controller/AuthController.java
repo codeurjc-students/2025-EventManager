@@ -29,31 +29,31 @@ public class AuthController {
 	
 	@PostMapping("/register")
 	public ResponseEntity<AuthResponse> registerUser(@Valid @RequestBody UserCreateDTO userCreateDTO, HttpServletResponse response) {
-		log.debug("process=register-user");
+		log.info("process=register-user");
 		return new ResponseEntity<>(authService.registerUser(userCreateDTO, response), HttpStatus.OK);
 	}
 
 	@PostMapping("/login")
 	public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest loginRequest, HttpServletResponse response) {
-		log.debug("process=login-user");
+		log.info("process=login-user");
 		return new ResponseEntity<>(authService.login(loginRequest, response), HttpStatus.OK);
 	}
 
 	@PostMapping("/refresh")
 	public ResponseEntity<AuthResponse> refreshToken(@CookieValue(name = "RefreshToken", required = false) String refreshToken, HttpServletResponse response) {
-		log.debug("process=refresh-token");
+		log.info("process=refresh-token");
 		return new ResponseEntity<>(authService.refreshToken(refreshToken, response), HttpStatus.OK);
 	}
 
 	@PostMapping("/logout")
 	public ResponseEntity<AuthResponse> logout(HttpServletResponse response) {
-		log.debug("process=logut-user");
+		log.info("process=logut-user");
 		return new ResponseEntity<>(authService.logout(response), HttpStatus.OK);
 	}
 
 	@PostMapping("/forgot-password")
 	public ResponseEntity<UserDTO> changeForgottenPassword(@Valid UserForgottenPassword userForgotenPassword) {
-		log.debug("process=change-forgotten-password");
+		log.info("process=change-forgotten-password");
 		return new ResponseEntity<>(authService.changeForgottenPassword(userForgotenPassword), HttpStatus.OK);
 	}
 

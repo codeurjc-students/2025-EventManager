@@ -32,6 +32,7 @@ import eventManager.search.SearchCriteria;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -89,6 +90,9 @@ public class GiftServiceImpl implements GiftService{
 	@Autowired
 	private AccessControlUtils accessControlUtils;
 
+	@Value("${app.images.max-size-bytes:" + Constantes.GIFT_IMAGES_MAX_SIZE_BYTES + "}")
+	private long maxImageSizeBytes;
+
 	@Override
 	public GiftDTO createGift(String eventCode, GiftCreateDTO giftCreateDTO) {
 		try{
@@ -113,20 +117,13 @@ public class GiftServiceImpl implements GiftService{
 			if (s3Service != null && giftCreateDTO.getImage() != null && !giftCreateDTO.getImage().toString().isEmpty()) {
 				try {
 					// Decodificar base64 recibido del frontend
-					String base64Image = giftCreateDTO.getImage().toString();
-					
-					// Remover prefijo "data:image/xxx;base64," si existe
-					if (base64Image.startsWith("data:")) {
-						base64Image = base64Image.substring(base64Image.indexOf(",") + 1);
-					}
-					
-					// Decodificar base64 a bytes
-					byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+					String originalImage = giftCreateDTO.getImage().toString();
+					byte[] imageBytes = decodeBase64Image(originalImage);
+					validateImageSize(imageBytes);
 					
 					// Determinar tipo de contenido y extensión
 					String contentType = "image/jpeg";
 					String extension = ".jpg";
-					String originalImage = giftCreateDTO.getImage().toString();
 					
 					if (originalImage.contains("data:image/png")) {
 						contentType = "image/png";
@@ -140,8 +137,10 @@ public class GiftServiceImpl implements GiftService{
 					String fileName = giftCreateDTO.getName().replaceAll("[^a-zA-Z0-9]", "_") + extension;
 					
 					imageS3Key = s3Service.uploadImage(imageBytes, fileName, contentType);
-					log.info("Imagen subida exitosamente: {}", imageS3Key);
+					log.debug("Imagen subida exitosamente: {}", imageS3Key);
 					
+				} catch (CustomException e) {
+					throw e;
 				} catch (Exception e) {
 					log.error("Error al subir imagen: {}", e.getMessage());
 					// No fallar la creación del regalo si falla la subida de imagen
@@ -278,21 +277,18 @@ public class GiftServiceImpl implements GiftService{
 						// Eliminar imagen anterior si existe
 						if (gift.getImage() != null && !gift.getImage().isEmpty()) {
 							s3Service.deleteImage(gift.getImage());
-							log.info("Imagen anterior eliminada: {}", gift.getImage());
+							log.debug("Imagen anterior eliminada: {}", gift.getImage());
 						}
 						
 						// Decodificar base64
-						String base64Image = giftDTO.getImage();
-						if (base64Image.startsWith("data:")) {
-							base64Image = base64Image.substring(base64Image.indexOf(",") + 1);
-						}
-						
-						byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Image);
+						String originalImage = giftDTO.getImage();
+						byte[] imageBytes = decodeBase64Image(originalImage);
+						validateImageSize(imageBytes);
 						
 						// Determinar tipo de contenido
 						String contentType = "image/jpeg";
 						String extension = ".jpg";
-						if (giftDTO.getImage().contains("data:image/png")) {
+						if (originalImage.contains("data:image/png")) {
 							contentType = "image/png";
 							extension = ".png";
 						}
@@ -300,8 +296,10 @@ public class GiftServiceImpl implements GiftService{
 						String fileName = giftDTO.getName().replaceAll("[^a-zA-Z0-9]", "_") + extension;
 						String newImageS3Key = s3Service.uploadImage(imageBytes, fileName, contentType);
 						gift.setImage(newImageS3Key);
-						log.info("Nueva imagen subida: {}", newImageS3Key);
+						log.debug("Nueva imagen subida: {}", newImageS3Key);
 					}
+				} catch (CustomException e) {
+					throw e;
 				} catch (Exception e) {
 					log.error("Error al actualizar imagen: {}", e.getMessage());
 					// No fallar la actualización del regalo
@@ -335,26 +333,23 @@ public class GiftServiceImpl implements GiftService{
 		try {
 			// Verificamos que el evento existe
 			EventDTO event = eventService.getEvent(eventCode);
-			
-			// Validar que el usuario autenticado es HOST del evento
-			accessControlUtils.validateUserIsHost(event.getEventId());
 
 			// Verificamos que el regalo existe
 			Gift gift = giftRepository.findByGiftId(giftId).orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, Constantes.MESSAGE_GIFT_DOES_NOT_EXIST));
 			
+			// Validar que el usuario autenticado es HOST del evento o creador del regalo
+			accessControlUtils.validateHostOrGiftCreator(event.getEventId(), gift.getCreationUser());
+			
 			// Eliminamos la imagen del regalo de S3 si existe (solo en perfil AWS)
-			/*
-			// DESCOMENTAR ESTE BLOQUE AL ACTIVAR PERFIL AWS
 			if (s3Service != null && gift.getImage() != null && !gift.getImage().isEmpty()) {
 				try {
 					s3Service.deleteImage(gift.getImage());
-					log.info("Imagen eliminada de S3: {}", gift.getImage());
+					log.debug("Imagen eliminada de S3: {}", gift.getImage());
 				} catch (Exception e) {
 					log.error("Error al eliminar imagen de S3: {}", e.getMessage());
 					// No fallar la eliminación del regalo si falla la eliminación de la imagen
 				}
 			}
-			*/
 
 			// Eliminamos las contribuciones del regalo
 			giftContributionRepository.deleteByGiftId_GiftId(giftId);
@@ -438,6 +433,20 @@ public class GiftServiceImpl implements GiftService{
 			throw new CustomException(HttpStatus.INTERNAL_SERVER_ERROR, Constantes.MESSAGE_INTERNAL_SERVER_ERROR);
 		}
 		return userContributions;
+	}
+
+	private byte[] decodeBase64Image(String rawImageData) {
+		String base64Image = rawImageData;
+		if (base64Image.startsWith("data:")) {
+			base64Image = base64Image.substring(base64Image.indexOf(",") + 1);
+		}
+		return java.util.Base64.getDecoder().decode(base64Image);
+	}
+
+	private void validateImageSize(byte[] imageBytes) {
+		if (imageBytes != null && imageBytes.length > maxImageSizeBytes) {
+			throw new CustomException(HttpStatus.BAD_REQUEST, Constantes.MESSAGE_IMAGE_TOO_LARGE);
+		}
 	}
 
 	/**

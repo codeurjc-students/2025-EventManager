@@ -4,7 +4,7 @@
 [![Cobertura JaCoCo](https://img.shields.io/badge/coverage-JaCoCo%20artifact-blue)](https://github.com/codeurjc-students/2025-EventManager/actions/workflows/ci.yml)
 
 > **Descripción**
-Plataforma de gestión de eventos con autenticación del usuario y gestión de: usuarios, eventos, entradas y regalos.
+EventManager es una plataforma web para crear y administrar eventos de forma completa: permite a los usuarios registrarse, acceder, gestionar su perfil y participar en eventos, así como controlar sus entradas y regalos en estos.
 
 ---
 
@@ -12,10 +12,10 @@ Plataforma de gestión de eventos con autenticación del usuario y gestión de: 
 
 - **Autenticación**: registro, login, logout y refresh token.
 - **Perfil de usuario**: consulta y actualización de datos.
-- **Gestión de eventos**: crear, listar, ver detalles y actualizar.
+- **Gestión de eventos**: creación, listado, detalle y actualización.
 - **Entradas**: inscripción a eventos y gestión de tickets.
-- **Regalos**: visualización y gestión.
-- **SPA con routing**: vistas públicas/privadas en el frontend.
+- **Regalos**: visualización y administración.
+- **SPA con routing**: vistas públicas y privadas en el frontend.
 
 ---
 
@@ -186,26 +186,39 @@ El proyecto incluye:
 
 Estos ficheros son artefactos de ejecución, no se versionan porque `target/` está ignorado en `.gitignore`.
 
-### Workflow de CI (`.github/workflows/ci.yml`)
+---
 
-El pipeline está dividido en tres jobs principales:
-1. **unit**
-	- Ejecuta `./mvnw -B -Punit test`.
-	- Publica `target/surefire-reports/**` como artifact.
+## CI/CD
 
-2. **selenium** (matriz por suites)
-	- Levanta PostgreSQL como servicio.
-	- Arranca MinIO en el job.
-	- Ejecuta `./mvnw -B -Pselenium,selenium-ci -Dselenium.includes=... test`.
-	- Publica reportes de surefire y logs.
+### Integración Continua (CI)
 
-3. **coverage**
-	- Ejecuta `./mvnw -B -Punit verify`.
-	- Publica `target/site/jacoco/**` y `jacoco.xml` como artifacts.
+**¿Qué tareas se ejecutan automáticamente?**
+- Ejecución de tests unitarios, Selenium y generación de cobertura con JaCoCo.
+- Publicación de reportes de tests y cobertura como artifacts.
+
+**¿Cuándo se ejecuta?**
+- En *push* o *pull requests* hacia `main`, `develop`, `release/**` y `hotfix/**`.
+
+**¿Dónde se almacenan los artefactos?**
+- En **GitHub Actions → Artifacts** del run correspondiente (`surefire-*`, `jacoco-*`, `backend-log-*`).
+
+### Entrega Continua (CD)
+
+**¿Qué tareas se ejecutan automáticamente?**
+- Construcción de la imagen Docker usando `Dockerfile`.
+- Publicación de la imagen en **DockerHub**.
+- Publicación del `docker-compose.aws.yaml` como **OCI artifact** (solo en releases).
+
+**¿Cuándo se ejecuta?**
+- En commits a `main` (por ejemplo tras merge de un pull request).
+- En publicaciones de *release*.
+
+**¿Dónde se almacenan los artefactos?**
+- En **DockerHub**: `docker.io/<usuario>/eventmanagerapp`.
+- El compose OCI: `docker.io/<usuario>/eventmanagerapp-compose:<tag-release>`.
+- Etiquetas típicas: `latest` (main), `sha` corto y etiqueta de release.
 
 ---
 
-# Endpoint actual de la aplicación
-Debido a que no se está utilizando una IP dinámica en la instancia EC2 la IP pública de instancia cambiará en caso de apagarse
-
-http://54.216.141.113:8090/
+## Despliegue en AWS y endpoint actual de la aplicación
+Actualmente el endpoint público usa la siguiente IP elástica: https://52.51.236.28/

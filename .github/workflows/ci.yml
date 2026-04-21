@@ -20,8 +20,8 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  unit:
-    name: Unit tests
+  build:
+    name: Build (skip tests)
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -36,11 +36,51 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Ensure Maven wrapper is executable
-        run: chmod +x mvnw
+      - name: Install Maven
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y maven
+
+      - name: Build (skip tests)
+        run: mvn -B -Punit -DskipTests package
+
+      - name: Upload build outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-target
+          path: target/**
+          if-no-files-found: error
+
+  unit:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Install Maven
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y maven
+
+      - name: Download build outputs
+        uses: actions/download-artifact@v4
+        with:
+          name: build-target
+          path: .
 
       - name: Run unit profile tests
-        run: ./mvnw -B -Punit test
+        run: mvn -B -Punit test
 
       - name: Upload surefire reports (unit)
         if: always()
@@ -54,6 +94,7 @@ jobs:
     name: Selenium tests (${{ matrix.suiteName }})
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    needs: build
     strategy:
       fail-fast: false
       matrix:
@@ -105,8 +146,16 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Ensure Maven wrapper is executable
-        run: chmod +x mvnw
+      - name: Install Maven
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y maven
+
+      - name: Download build outputs
+        uses: actions/download-artifact@v4
+        with:
+          name: build-target
+          path: .
 
       - name: Start MinIO
         run: |
@@ -117,7 +166,7 @@ jobs:
             minio/minio:RELEASE.2024-01-16T16-07-38Z server /data --console-address ":9001"
 
       - name: Run selenium profile tests (shard)
-        run: ./mvnw -B -Pselenium,selenium-ci -Dselenium.includes="${{ matrix.suiteInclude }}" test
+        run: mvn -B -Pselenium,selenium-ci -Dselenium.includes="${{ matrix.suiteInclude }}" test
 
       - name: Upload surefire reports (selenium)
         if: always()
@@ -139,6 +188,7 @@ jobs:
     name: Coverage (JaCoCo)
     runs-on: ubuntu-latest
     timeout-minutes: 35
+    needs: build
 
     steps:
       - name: Checkout
@@ -151,11 +201,19 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Ensure Maven wrapper is executable
-        run: chmod +x mvnw
+      - name: Install Maven
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y maven
+
+      - name: Download build outputs
+        uses: actions/download-artifact@v4
+        with:
+          name: build-target
+          path: .
 
       - name: Run verify with unit profile (JaCoCo report)
-        run: ./mvnw -B -Punit verify
+        run: mvn -B -Punit verify
 
       - name: Upload JaCoCo site
         uses: actions/upload-artifact@v4

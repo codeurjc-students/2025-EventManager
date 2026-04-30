@@ -27,7 +27,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Tests unitarios para JwtRequestFilter, el filtro que intercepta las peticiones HTTP para verificar la autenticacion JWT y establecer el contexto de seguridad.
+ * Unit tests for JwtRequestFilter, the filter that intercepts HTTP requests to
+ * validate JWT authentication and set the security context.
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("JwtRequestFilter Tests")
@@ -66,10 +67,10 @@ class JwtRequestFilterTest {
     }
 
     /**
-     * Verifica que el endpoint de login es publico y no se valida ningun token JWT.
+     * Verifies that the login endpoint is public and no JWT token is validated.
      */
     @Test
-    @DisplayName("Endpoint /api/auth/login es publico, no valida JWT")
+    @DisplayName("Endpoint /api/auth/login is public, does not validate JWT")
     void testPublicEndpoint_Login() throws Exception {
         when(request.getRequestURI()).thenReturn("/api/auth/login");
 
@@ -80,10 +81,11 @@ class JwtRequestFilterTest {
     }
 
     /**
-     * Verifica que el endpoint de registro es publico y no requiere autenticacion.
+     * Verifies that the registration endpoint is public and does not require
+     * authentication.
      */
     @Test
-    @DisplayName("Endpoint /api/auth/register es publico")
+    @DisplayName("Endpoint /api/auth/register is public")
     void testPublicEndpoint_Register() throws Exception {
         when(request.getRequestURI()).thenReturn("/api/auth/register");
 
@@ -94,10 +96,11 @@ class JwtRequestFilterTest {
     }
 
     /**
-     * Verifica que el endpoint de recuperacion de contrasena es publico y no requiere autenticacion.
+     * Verifies that the password recovery endpoint is public and does not require
+     * authentication.
      */
     @Test
-    @DisplayName("Endpoint /api/auth/forgot-password es publico")
+    @DisplayName("Endpoint /api/auth/forgot-password is public")
     void testPublicEndpoint_ForgotPassword() throws Exception {
         when(request.getRequestURI()).thenReturn("/api/auth/forgot-password");
 
@@ -108,10 +111,11 @@ class JwtRequestFilterTest {
     }
 
     /**
-     * Verifica que los recursos estaticos como archivos JavaScript son accesibles sin autenticacion.
+     * Verifies that static resources like JavaScript files are accessible without
+     * authentication.
      */
     @Test
-    @DisplayName("Assets estaticos son publicos")
+    @DisplayName("Static assets are public")
     void testPublicEndpoint_StaticResource() throws Exception {
         when(request.getRequestURI()).thenReturn("/assets/main.js");
 
@@ -122,10 +126,10 @@ class JwtRequestFilterTest {
     }
 
     /**
-     * Verifica que las rutas del frontend SPA no requieren validacion JWT.
+     * Verifies that SPA frontend routes do not require JWT validation.
      */
     @Test
-    @DisplayName("Ruta SPA (no /api) es publica")
+    @DisplayName("SPA route (non-/api) is public")
     void testPublicEndpoint_SpaRoute() throws Exception {
         when(request.getRequestURI()).thenReturn("/eventos");
 
@@ -136,10 +140,10 @@ class JwtRequestFilterTest {
     }
 
     /**
-     * Verifica que la interfaz de Swagger UI es accesible sin autenticacion.
+     * Verifies that the Swagger UI is accessible without authentication.
      */
     @Test
-    @DisplayName("Swagger UI es publico")
+    @DisplayName("Swagger UI is public")
     void testPublicEndpoint_SwaggerUI() throws Exception {
         when(request.getRequestURI()).thenReturn("/swagger-ui/index.html");
 
@@ -150,10 +154,11 @@ class JwtRequestFilterTest {
     }
 
     /**
-     * Verifica que un endpoint protegido con cookie JWT valida establece correctamente el SecurityContext.
+     * Verifies that a protected endpoint with a valid JWT cookie correctly sets the
+     * SecurityContext.
      */
     @Test
-    @DisplayName("Endpoint protegido con cookie valida establece SecurityContext")
+    @DisplayName("Protected endpoint with valid cookie sets SecurityContext")
     void testProtectedEndpoint_ValidCookie() throws Exception {
         when(request.getRequestURI()).thenReturn("/api/events");
 
@@ -172,13 +177,15 @@ class JwtRequestFilterTest {
     }
 
     /**
-     * Verifica que sin cookie JWT presente, el SecurityContext permanece vacio y la peticion continua.
+     * Verifies that without a JWT cookie, the SecurityContext remains empty and the
+     * request continues.
      */
     @Test
-    @DisplayName("Endpoint protegido sin cookie limpia SecurityContext")
+    @DisplayName("Protected endpoint without cookie clears SecurityContext")
     void testProtectedEndpoint_NoCookie() throws Exception {
         when(request.getRequestURI()).thenReturn("/api/events");
-        when(jwtTokenProvider.validateToken(request, true)).thenThrow(new IllegalArgumentException("No token found in cookies"));
+        when(jwtTokenProvider.validateToken(request, true))
+                .thenThrow(new IllegalArgumentException("No token found in cookies"));
 
         invokeFilter();
 
@@ -187,10 +194,11 @@ class JwtRequestFilterTest {
     }
 
     /**
-     * Verifica que con una cookie JWT invalida, el SecurityContext se limpia y la peticion continua.
+     * Verifies that with an invalid JWT cookie, the SecurityContext is cleared and
+     * the request continues.
      */
     @Test
-    @DisplayName("Endpoint protegido con cookie invalida limpia SecurityContext")
+    @DisplayName("Protected endpoint with invalid cookie clears SecurityContext")
     void testProtectedEndpoint_InvalidCookie() throws Exception {
         when(request.getRequestURI()).thenReturn("/api/events");
         when(jwtTokenProvider.validateToken(request, true)).thenThrow(new RuntimeException("Invalid JWT"));

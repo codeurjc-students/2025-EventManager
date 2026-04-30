@@ -29,7 +29,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Tests unitarios para AccessControlUtils, que centraliza las validaciones de permisos y control de acceso sobre usuarios, eventos y tickets.
+ * Unit tests for AccessControlUtils, which centralizes permission and access
+ * control checks for users, events, and tickets.
  */
 @DisplayName("AccessControlUtils Tests")
 class AccessControlUtilsTest {
@@ -89,19 +90,20 @@ class AccessControlUtilsTest {
     }
 
     /**
-     * Verifica que se obtiene correctamente el nombre de usuario desde el SecurityContext.
+     * Verifies that the username is retrieved correctly from the SecurityContext.
      */
     @Test
-    @DisplayName("getAuthenticatedUsername - Retorna username del SecurityContext")
+    @DisplayName("getAuthenticatedUsername - Returns username from SecurityContext")
     void testGetAuthenticatedUsername() {
         assertEquals("testuser", accessControlUtils.getAuthenticatedUsername());
     }
 
     /**
-     * Verifica que se retorna el DTO del usuario autenticado consultando por su nombre de usuario.
+     * Verifies that the authenticated user's DTO is returned by looking up the
+     * username.
      */
     @Test
-    @DisplayName("getAuthenticatedUser - Retorna UserDTO del usuario autenticado")
+    @DisplayName("getAuthenticatedUser - Returns authenticated UserDTO")
     void testGetAuthenticatedUser_Success() {
         when(userService.getUserInformationByUsername("testuser")).thenReturn(testUserDTO);
         UserDTO result = accessControlUtils.getAuthenticatedUser();
@@ -111,20 +113,21 @@ class AccessControlUtilsTest {
     }
 
     /**
-     * Verifica que el propietario de la cuenta puede acceder sin que se lance excepcion.
+     * Verifies that the account owner can access without throwing an exception.
      */
     @Test
-    @DisplayName("validateUserOwnership - Propietario, no lanza excepcion")
+    @DisplayName("validateUserOwnership - Owner access, no exception")
     void testValidateUserOwnership_Owner() {
         when(userRepository.findById(1)).thenReturn(Optional.of(testUser));
         assertDoesNotThrow(() -> accessControlUtils.validateUserOwnership(1));
     }
 
     /**
-     * Verifica que se lanza FORBIDDEN cuando el usuario autenticado no es propietario de la cuenta.
+     * Verifies that FORBIDDEN is thrown when the authenticated user is not the
+     * account owner.
      */
     @Test
-    @DisplayName("validateUserOwnership - No propietario, lanza FORBIDDEN")
+    @DisplayName("validateUserOwnership - Non-owner access, throws FORBIDDEN")
     void testValidateUserOwnership_NonOwner() {
         User otherUser = User.builder().userId(2).username("otheruser").build();
         when(userRepository.findById(2)).thenReturn(Optional.of(otherUser));
@@ -134,10 +137,11 @@ class AccessControlUtilsTest {
     }
 
     /**
-     * Verifica que se lanza NOT_FOUND cuando el usuario no existe en la base de datos.
+     * Verifies that NOT_FOUND is thrown when the user does not exist in the
+     * database.
      */
     @Test
-    @DisplayName("validateUserOwnership - Usuario no encontrado, lanza NOT_FOUND")
+    @DisplayName("validateUserOwnership - User not found, throws NOT_FOUND")
     void testValidateUserOwnership_UserNotFound() {
         when(userRepository.findById(999)).thenReturn(Optional.empty());
         CustomException ex = assertThrows(CustomException.class, () -> accessControlUtils.validateUserOwnership(999));
@@ -145,10 +149,11 @@ class AccessControlUtilsTest {
     }
 
     /**
-     * Verifica que retorna true cuando el usuario autenticado es HOST del evento indicado.
+     * Verifies that it returns true when the authenticated user is HOST of the
+     * event.
      */
     @Test
-    @DisplayName("isUserHostOfEvent - Es HOST, retorna true")
+    @DisplayName("isUserHostOfEvent - Is HOST, returns true")
     void testIsUserHostOfEvent_True() {
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
         when(ticketRepository.existsByEventId_EventIdAndUserId_UserIdAndRole(1, 1, "HOST")).thenReturn(true);
@@ -156,10 +161,11 @@ class AccessControlUtilsTest {
     }
 
     /**
-     * Verifica que retorna false cuando el usuario autenticado no es HOST del evento.
+     * Verifies that it returns false when the authenticated user is not HOST of the
+     * event.
      */
     @Test
-    @DisplayName("isUserHostOfEvent - No es HOST, retorna false")
+    @DisplayName("isUserHostOfEvent - Not HOST, returns false")
     void testIsUserHostOfEvent_False() {
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
         when(ticketRepository.existsByEventId_EventIdAndUserId_UserIdAndRole(1, 1, "HOST")).thenReturn(false);
@@ -167,20 +173,22 @@ class AccessControlUtilsTest {
     }
 
     /**
-     * Verifica que se lanza excepcion cuando el usuario no existe al comprobar si es HOST.
+     * Verifies that an exception is thrown when the user does not exist while
+     * checking HOST status.
      */
     @Test
-    @DisplayName("isUserHostOfEvent - Usuario no encontrado, lanza excepcion")
+    @DisplayName("isUserHostOfEvent - User not found, throws exception")
     void testIsUserHostOfEvent_UserNotFound() {
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.empty());
         assertThrows(CustomException.class, () -> accessControlUtils.isUserHostOfEvent(1));
     }
 
     /**
-     * Verifica que no se lanza excepcion cuando el usuario autenticado es HOST del evento.
+     * Verifies that no exception is thrown when the authenticated user is HOST of
+     * the event.
      */
     @Test
-    @DisplayName("validateUserIsHost - Es HOST, no lanza excepcion")
+    @DisplayName("validateUserIsHost - Is HOST, no exception")
     void testValidateUserIsHost_IsHost() {
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
         when(ticketRepository.existsByEventId_EventIdAndUserId_UserIdAndRole(1, 1, "HOST")).thenReturn(true);
@@ -188,10 +196,10 @@ class AccessControlUtilsTest {
     }
 
     /**
-     * Verifica que se lanza FORBIDDEN cuando el usuario no es HOST del evento.
+     * Verifies that FORBIDDEN is thrown when the user is not HOST of the event.
      */
     @Test
-    @DisplayName("validateUserIsHost - No es HOST, lanza FORBIDDEN")
+    @DisplayName("validateUserIsHost - Not HOST, throws FORBIDDEN")
     void testValidateUserIsHost_NotHost() {
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
         when(ticketRepository.existsByEventId_EventIdAndUserId_UserIdAndRole(1, 1, "HOST")).thenReturn(false);
@@ -201,10 +209,11 @@ class AccessControlUtilsTest {
     }
 
     /**
-     * Verifica que no se lanza excepcion cuando el usuario esta registrado en el evento.
+     * Verifies that no exception is thrown when the user is registered in the
+     * event.
      */
     @Test
-    @DisplayName("validateUserRegisteredInEvent - Registrado, no lanza excepcion")
+    @DisplayName("validateUserRegisteredInEvent - Registered, no exception")
     void testValidateUserRegisteredInEvent_Registered() {
         when(userService.getUserInformationByUsername("testuser")).thenReturn(testUserDTO);
         TicketDTO ticketDTO = new TicketDTO();
@@ -213,23 +222,26 @@ class AccessControlUtilsTest {
     }
 
     /**
-     * Verifica que se lanza FORBIDDEN cuando el usuario no esta registrado en el evento.
+     * Verifies that FORBIDDEN is thrown when the user is not registered in the
+     * event.
      */
     @Test
-    @DisplayName("validateUserRegisteredInEvent - No registrado, lanza FORBIDDEN")
+    @DisplayName("validateUserRegisteredInEvent - Not registered, throws FORBIDDEN")
     void testValidateUserRegisteredInEvent_NotRegistered() {
         when(userService.getUserInformationByUsername("testuser")).thenReturn(testUserDTO);
-        when(ticketService.getTicketByEventAndUser(1, 1)).thenThrow(new CustomException(HttpStatus.NOT_FOUND, Constantes.MESSAGE_USER_NOT_REGISTERED_IN_EVENT));
-        CustomException ex = assertThrows(CustomException.class, () -> accessControlUtils.validateUserRegisteredInEvent(1));
+        when(ticketService.getTicketByEventAndUser(1, 1))
+                .thenThrow(new CustomException(HttpStatus.NOT_FOUND, Constantes.MESSAGE_USER_NOT_REGISTERED_IN_EVENT));
+        CustomException ex = assertThrows(CustomException.class,
+                () -> accessControlUtils.validateUserRegisteredInEvent(1));
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
         assertEquals(Constantes.MESSAGE_USER_NOT_REGISTERED_IN_EVENT, ex.getMessage());
     }
 
     /**
-     * Verifica que el propietario del ticket puede acceder sin que se lance excepcion.
+     * Verifies that the ticket owner can access without throwing an exception.
      */
     @Test
-    @DisplayName("validateTicketAccess - Propietario del ticket, no lanza excepcion")
+    @DisplayName("validateTicketAccess - Ticket owner, no exception")
     void testValidateTicketAccess_Owner() {
         Event event = Event.builder().eventId(1).build();
         Ticket ticket = Ticket.builder().ticketId(10).userId(testUser).eventId(event).build();
@@ -239,10 +251,10 @@ class AccessControlUtilsTest {
     }
 
     /**
-     * Verifica que el HOST del evento puede acceder al ticket aunque no sea su propietario.
+     * Verifies that the event HOST can access the ticket even if not the owner.
      */
     @Test
-    @DisplayName("validateTicketAccess - HOST del evento, no lanza excepcion")
+    @DisplayName("validateTicketAccess - Event HOST, no exception")
     void testValidateTicketAccess_Host() {
         User otherUser = User.builder().userId(2).username("otheruser").build();
         Event event = Event.builder().eventId(1).build();
@@ -254,10 +266,11 @@ class AccessControlUtilsTest {
     }
 
     /**
-     * Verifica que se lanza FORBIDDEN cuando el usuario no es ni propietario del ticket ni HOST.
+     * Verifies that FORBIDDEN is thrown when the user is neither ticket owner nor
+     * HOST.
      */
     @Test
-    @DisplayName("validateTicketAccess - Ni propietario ni HOST, lanza FORBIDDEN")
+    @DisplayName("validateTicketAccess - Neither owner nor HOST, throws FORBIDDEN")
     void testValidateTicketAccess_Unauthorized() {
         User otherUser = User.builder().userId(2).username("otheruser").build();
         Event event = Event.builder().eventId(1).build();
@@ -270,10 +283,11 @@ class AccessControlUtilsTest {
     }
 
     /**
-     * Verifica que se lanza NOT_FOUND cuando el ticket no existe en la base de datos.
+     * Verifies that NOT_FOUND is thrown when the ticket does not exist in the
+     * database.
      */
     @Test
-    @DisplayName("validateTicketAccess - Ticket no encontrado, lanza NOT_FOUND")
+    @DisplayName("validateTicketAccess - Ticket not found, throws NOT_FOUND")
     void testValidateTicketAccess_TicketNotFound() {
         when(ticketRepository.findById(999)).thenReturn(Optional.empty());
         CustomException ex = assertThrows(CustomException.class, () -> accessControlUtils.validateTicketAccess(999));
@@ -281,10 +295,11 @@ class AccessControlUtilsTest {
     }
 
     /**
-     * Verifica que no se lanza excepcion cuando el usuario es HOST del evento asociado al codigo.
+     * Verifies that no exception is thrown when the user is HOST of the event
+     * associated with the code.
      */
     @Test
-    @DisplayName("validateUserIsHostByEventCode - Delega a validateUserIsHost")
+    @DisplayName("validateUserIsHostByEventCode - Delegates to validateUserIsHost")
     void testValidateUserIsHostByEventCode_IsHost() {
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
         when(ticketRepository.existsByEventId_EventIdAndUserId_UserIdAndRole(1, 1, "HOST")).thenReturn(true);
@@ -292,23 +307,25 @@ class AccessControlUtilsTest {
     }
 
     /**
-     * Verifica que se lanza FORBIDDEN cuando el usuario no es HOST del evento asociado al codigo.
+     * Verifies that FORBIDDEN is thrown when the user is not HOST of the event
+     * associated with the code.
      */
     @Test
-    @DisplayName("validateUserIsHostByEventCode - No es HOST, lanza FORBIDDEN")
+    @DisplayName("validateUserIsHostByEventCode - Not HOST, throws FORBIDDEN")
     void testValidateUserIsHostByEventCode_NotHost() {
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
         when(ticketRepository.existsByEventId_EventIdAndUserId_UserIdAndRole(1, 1, "HOST")).thenReturn(false);
-        CustomException ex = assertThrows(CustomException.class, () -> accessControlUtils.validateUserIsHostByEventCode("ABC123", 1));
+        CustomException ex = assertThrows(CustomException.class,
+                () -> accessControlUtils.validateUserIsHostByEventCode("ABC123", 1));
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
         assertEquals(Constantes.MESSAGE_USER_NOT_HOST, ex.getMessage());
     }
 
     /**
-     * Verifica que el HOST del evento puede gestionar regalos sin que se lance excepcion.
+     * Verifies that the event HOST can manage gifts without throwing an exception.
      */
     @Test
-    @DisplayName("validateHostOrGiftCreator - Es HOST, no lanza excepcion")
+    @DisplayName("validateHostOrGiftCreator - Is HOST, no exception")
     void testValidateHostOrGiftCreator_IsHost() {
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
         when(ticketRepository.existsByEventId_EventIdAndUserId_UserIdAndRole(1, 1, "HOST")).thenReturn(true);
@@ -316,10 +333,10 @@ class AccessControlUtilsTest {
     }
 
     /**
-     * Verifica que el creador del regalo puede gestionarlo sin que se lance excepcion.
+     * Verifies that the gift creator can manage it without throwing an exception.
      */
     @Test
-    @DisplayName("validateHostOrGiftCreator - Es creador del regalo, no lanza excepcion")
+    @DisplayName("validateHostOrGiftCreator - Is gift creator, no exception")
     void testValidateHostOrGiftCreator_IsCreator() {
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
         when(ticketRepository.existsByEventId_EventIdAndUserId_UserIdAndRole(1, 1, "HOST")).thenReturn(false);
@@ -327,14 +344,16 @@ class AccessControlUtilsTest {
     }
 
     /**
-     * Verifica que se lanza FORBIDDEN cuando el usuario no es ni HOST ni creador del regalo.
+     * Verifies that FORBIDDEN is thrown when the user is neither HOST nor gift
+     * creator.
      */
     @Test
-    @DisplayName("validateHostOrGiftCreator - Ni HOST ni creador, lanza FORBIDDEN")
+    @DisplayName("validateHostOrGiftCreator - Neither HOST nor creator, throws FORBIDDEN")
     void testValidateHostOrGiftCreator_Neither() {
         when(userRepository.findByUsername("testuser")).thenReturn(Optional.of(testUser));
         when(ticketRepository.existsByEventId_EventIdAndUserId_UserIdAndRole(1, 1, "HOST")).thenReturn(false);
-        CustomException ex = assertThrows(CustomException.class, () -> accessControlUtils.validateHostOrGiftCreator(1, "otheruser"));
+        CustomException ex = assertThrows(CustomException.class,
+                () -> accessControlUtils.validateHostOrGiftCreator(1, "otheruser"));
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
         assertEquals(Constantes.MESSAGE_GIFT_UPDATE_FORBIDDEN, ex.getMessage());
     }

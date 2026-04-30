@@ -29,7 +29,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-/** Pruebas unitarias del servicio de eventos, incluyendo consulta, listado, creacion y actualizacion de eventos. */
+/**
+ * Unit tests for the event service, including retrieval, listing, creation, and
+ * updates.
+ */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("EventServiceImpl Tests")
 class EventServiceImplTest {
@@ -77,10 +80,10 @@ class EventServiceImplTest {
     }
 
     /**
-     * Verifica que se obtiene correctamente un evento existente a partir de su codigo.
+     * Verifies that an existing event is retrieved correctly by its code.
      */
     @Test
-    @DisplayName("getEvent - Exitoso")
+    @DisplayName("getEvent - Success")
     void testGetEvent_Success() {
         when(eventRepository.findByEventCode("ABC123")).thenReturn(Optional.of(testEvent));
         when(eventMapper.convertEventToEventDTO(testEvent)).thenReturn(testEventDTO);
@@ -92,10 +95,10 @@ class EventServiceImplTest {
     }
 
     /**
-     * Verifica que buscar un evento con un codigo inexistente lanza NOT_FOUND.
+     * Verifies that looking up an event with a non-existent code throws NOT_FOUND.
      */
     @Test
-    @DisplayName("getEvent - No encontrado")
+    @DisplayName("getEvent - Not found")
     void testGetEvent_NotFound() {
         when(eventRepository.findByEventCode("NOTFND")).thenReturn(Optional.empty());
 
@@ -105,10 +108,10 @@ class EventServiceImplTest {
     }
 
     /**
-     * Verifica que se recupera correctamente la entidad Event a partir de su codigo de evento.
+     * Verifies that the Event entity is retrieved correctly by its event code.
      */
     @Test
-    @DisplayName("getEventByEventCode - Exitoso")
+    @DisplayName("getEventByEventCode - Success")
     void testGetEventByCode_Success() {
         when(eventRepository.findByEventCode("ABC123")).thenReturn(Optional.of(testEvent));
 
@@ -119,10 +122,11 @@ class EventServiceImplTest {
     }
 
     /**
-     * Verifica que buscar una entidad Event con un codigo inexistente lanza NOT_FOUND.
+     * Verifies that looking up an Event entity with a non-existent code throws
+     * NOT_FOUND.
      */
     @Test
-    @DisplayName("getEventByEventCode - No encontrado")
+    @DisplayName("getEventByEventCode - Not found")
     void testGetEventByCode_NotFound() {
         when(eventRepository.findByEventCode("NOTFND")).thenReturn(Optional.empty());
 
@@ -131,10 +135,10 @@ class EventServiceImplTest {
     }
 
     /**
-     * Verifica que el listado de eventos devuelve resultados paginados correctamente.
+     * Verifies that event listing returns paginated results correctly.
      */
     @Test
-    @DisplayName("getEvents - Con resultados")
+    @DisplayName("getEvents - With results")
     void testGetEvents_WithResults() {
         Map<Integer, Integer> ticketMap = new HashMap<>();
         ticketMap.put(1, 10);
@@ -146,7 +150,8 @@ class EventServiceImplTest {
 
         Page<Event> eventPage = new PageImpl<>(List.of(testEvent));
         Specification<Event> specification = (root, query, builder) -> builder.conjunction();
-        when(eventRepository.findAll(org.mockito.ArgumentMatchers.<Specification<Event>>any(), any(Pageable.class))).thenReturn(eventPage);
+        when(eventRepository.findAll(org.mockito.ArgumentMatchers.<Specification<Event>>any(), any(Pageable.class)))
+                .thenReturn(eventPage);
         when(eventSpecificationBuilder.build(anyList())).thenReturn(specification);
 
         ResultPaginationDTO result = eventService.getEvents(1, 10, "eventName", "ASC", null, 1, "HOST");
@@ -156,10 +161,10 @@ class EventServiceImplTest {
     }
 
     /**
-     * Verifica que si el usuario no tiene tickets se devuelve una lista vacia de eventos.
+     * Verifies that if the user has no tickets, an empty event list is returned.
      */
     @Test
-    @DisplayName("getEvents - Sin tickets, retorna lista vacia")
+    @DisplayName("getEvents - No tickets, returns empty list")
     void testGetEvents_EmptyTickets() {
         when(ticketService.getTicketsByUserAndRole(1, "HOST")).thenReturn(new HashMap<>());
 
@@ -171,23 +176,26 @@ class EventServiceImplTest {
     }
 
     /**
-     * Verifica que un error inesperado al listar eventos produce INTERNAL_SERVER_ERROR.
+     * Verifies that an unexpected error while listing events results in
+     * INTERNAL_SERVER_ERROR.
      */
     @Test
-    @DisplayName("getEvents - Error inesperado lanza INTERNAL_SERVER_ERROR")
+    @DisplayName("getEvents - Unexpected error throws INTERNAL_SERVER_ERROR")
     void testGetEvents_InternalError() {
         when(ticketService.getTicketsByUserAndRole(1, "HOST")).thenThrow(new RuntimeException("DB error"));
 
-        CustomException ex = assertThrows(CustomException.class, () -> eventService.getEvents(1, 10, "eventName", "ASC", null, 1, "HOST"));
+        CustomException ex = assertThrows(CustomException.class,
+                () -> eventService.getEvents(1, 10, "eventName", "ASC", null, 1, "HOST"));
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, ex.getStatus());
         assertEquals(Constantes.MESSAGE_INTERNAL_SERVER_ERROR, ex.getMessage());
     }
 
     /**
-     * Verifica que la creacion de un evento se realiza correctamente y se asigna el ticket de HOST al creador.
+     * Verifies that event creation completes correctly and assigns the HOST ticket
+     * to the creator.
      */
     @Test
-    @DisplayName("createEvent - Creacion exitosa")
+    @DisplayName("createEvent - Successful creation")
     void testCreateEvent_Success() {
         UserDTO userDTO = new UserDTO();
         userDTO.setUserId(1);
@@ -210,22 +218,25 @@ class EventServiceImplTest {
     }
 
     /**
-     * Verifica que crear un evento con un usuario inexistente lanza BAD_REQUEST.
+     * Verifies that creating an event with a non-existent user throws BAD_REQUEST.
      */
     @Test
-    @DisplayName("createEvent - Usuario no encontrado")
+    @DisplayName("createEvent - User not found")
     void testCreateEvent_UserNotFound() {
-        when(userService.getUserInformation(999)).thenThrow(new CustomException(HttpStatus.BAD_REQUEST, Constantes.MESSAGE_USER_NOT_REGISTERED));
+        when(userService.getUserInformation(999))
+                .thenThrow(new CustomException(HttpStatus.BAD_REQUEST, Constantes.MESSAGE_USER_NOT_REGISTERED));
 
-        CustomException ex = assertThrows(CustomException.class, () -> eventService.createEvent(999, new CreateUpdateEventDTO()));
+        CustomException ex = assertThrows(CustomException.class,
+                () -> eventService.createEvent(999, new CreateUpdateEventDTO()));
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
     }
 
     /**
-     * Verifica que un error inesperado durante la creacion de un evento produce INTERNAL_SERVER_ERROR.
+     * Verifies that an unexpected error during event creation results in
+     * INTERNAL_SERVER_ERROR.
      */
     @Test
-    @DisplayName("createEvent - Error inesperado lanza INTERNAL_SERVER_ERROR")
+    @DisplayName("createEvent - Unexpected error throws INTERNAL_SERVER_ERROR")
     void testCreateEvent_UnexpectedError() {
         UserDTO userDTO = new UserDTO();
         userDTO.setUserId(1);
@@ -243,10 +254,10 @@ class EventServiceImplTest {
     }
 
     /**
-     * Verifica que la actualizacion de un evento existente se completa correctamente.
+     * Verifies that updating an existing event completes correctly.
      */
     @Test
-    @DisplayName("updateEvent - Actualizacion exitosa")
+    @DisplayName("updateEvent - Successful update")
     void testUpdateEvent_Success() {
         when(eventRepository.findByEventCode("ABC123")).thenReturn(Optional.of(testEvent));
         doNothing().when(accessControlUtils).validateUserIsHost(1);
@@ -268,27 +279,30 @@ class EventServiceImplTest {
     }
 
     /**
-     * Verifica que intentar actualizar un evento inexistente lanza NOT_FOUND.
+     * Verifies that attempting to update a non-existent event throws NOT_FOUND.
      */
     @Test
-    @DisplayName("updateEvent - Evento no encontrado")
+    @DisplayName("updateEvent - Event not found")
     void testUpdateEvent_NotFound() {
         when(eventRepository.findByEventCode("NOTFND")).thenReturn(Optional.empty());
 
-        CustomException ex = assertThrows(CustomException.class, () -> eventService.updateEvent("NOTFND", new CreateUpdateEventDTO()));
+        CustomException ex = assertThrows(CustomException.class,
+                () -> eventService.updateEvent("NOTFND", new CreateUpdateEventDTO()));
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatus());
     }
 
     /**
-     * Verifica que un usuario sin rol HOST no puede actualizar el evento.
+     * Verifies that a user without the HOST role cannot update the event.
      */
     @Test
-    @DisplayName("updateEvent - No es HOST, lanza FORBIDDEN")
+    @DisplayName("updateEvent - Not HOST, throws FORBIDDEN")
     void testUpdateEvent_NotHost() {
         when(eventRepository.findByEventCode("ABC123")).thenReturn(Optional.of(testEvent));
-        doThrow(new CustomException(HttpStatus.FORBIDDEN, Constantes.MESSAGE_USER_NOT_HOST)).when(accessControlUtils).validateUserIsHost(1);
+        doThrow(new CustomException(HttpStatus.FORBIDDEN, Constantes.MESSAGE_USER_NOT_HOST)).when(accessControlUtils)
+                .validateUserIsHost(1);
 
-        CustomException ex = assertThrows(CustomException.class, () -> eventService.updateEvent("ABC123", new CreateUpdateEventDTO()));
+        CustomException ex = assertThrows(CustomException.class,
+                () -> eventService.updateEvent("ABC123", new CreateUpdateEventDTO()));
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
     }
 }

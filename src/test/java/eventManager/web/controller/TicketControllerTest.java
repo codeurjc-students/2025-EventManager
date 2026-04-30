@@ -25,7 +25,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * Pruebas unitarias del controlador de tickets. Cubre obtencion de informacion del evento, listado de tickets, inscripcion y actualizacion.
+ * Unit tests for the ticket controller. Covers event information retrieval,
+ * ticket listing, enrollment, and updates.
  */
 @WebMvcTest(TicketController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -38,13 +39,13 @@ class TicketControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-        @MockitoBean
+    @MockitoBean
     private TicketService ticketService;
 
-        @MockitoBean
+    @MockitoBean
     private JwtTokenProvider jwtTokenProvider;
 
-        @MockitoBean
+    @MockitoBean
     private UserDetailsService userDetailsService;
 
     private EventTicketDTO eventTicketDTO;
@@ -57,17 +58,17 @@ class TicketControllerTest {
     void setUp() {
         // EventTicketDTO
         eventTicketDTO = new EventTicketDTO();
-                EventDTO eventDTO = new EventDTO();
-                eventDTO.setEventCode("MADRID");
-                eventDTO.setEventName("Cena de Navidad");
-                eventDTO.setDate(LocalDateTime.now().plusDays(7));
-                TicketDTO eventTicket = new TicketDTO();
-                eventTicket.setTicketId(1);
-                eventTicket.setRole("GUEST");
-                eventTicket.setGuestNumber(2);
-                eventTicket.setAssistConfirmation(false);
-                eventTicketDTO.setEvent(eventDTO);
-                eventTicketDTO.setTicket(eventTicket);
+        EventDTO eventDTO = new EventDTO();
+        eventDTO.setEventCode("MADRID");
+        eventDTO.setEventName("Cena de Navidad");
+        eventDTO.setDate(LocalDateTime.now().plusDays(7));
+        TicketDTO eventTicket = new TicketDTO();
+        eventTicket.setTicketId(1);
+        eventTicket.setRole("GUEST");
+        eventTicket.setGuestNumber(2);
+        eventTicket.setAssistConfirmation(false);
+        eventTicketDTO.setEvent(eventDTO);
+        eventTicketDTO.setTicket(eventTicket);
 
         // TicketDTO
         ticketDTO = new TicketDTO();
@@ -94,7 +95,7 @@ class TicketControllerTest {
                 .notes("Updated notes")
                 .build();
 
-        // Resultado paginado
+        // Paginated result
         paginationDTO = new ResultPaginationDTO();
         paginationDTO.setData(new ArrayList<>());
         PaginationDTO pageDTO = new PaginationDTO();
@@ -106,16 +107,16 @@ class TicketControllerTest {
     }
 
     /**
-     * Verifica que se obtiene la informacion del evento y ticket correctamente.
+     * Verifies that event and ticket information is retrieved correctly.
      */
     @Test
-    @DisplayName("Get Event Information - Exitoso")
+    @DisplayName("Get Event Information - Success")
     @WithMockUser
     void testGetEventInformation_Success() throws Exception {
         when(ticketService.getEventInformation("MADRID", 1, 1)).thenReturn(eventTicketDTO);
 
         mockMvc.perform(get("/api/events/{eventCode}/tickets/{ticketId}", "MADRID", 1)
-                        .param("userId", "1"))
+                .param("userId", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.event.eventCode").value("MADRID"))
                 .andExpect(jsonPath("$.ticket.ticketId").value(1))
@@ -125,161 +126,174 @@ class TicketControllerTest {
     }
 
     /**
-     * Verifica que la consulta de informacion falla cuando el evento no existe.
+     * Verifies that the information query fails when the event does not exist.
      */
     @Test
-    @DisplayName("Get Event Information - Evento no encontrado")
+    @DisplayName("Get Event Information - Event not found")
     @WithMockUser
     void testGetEventInformation_EventNotFound() throws Exception {
-        when(ticketService.getEventInformation("NOTFOUND", 1, 1)).thenThrow(new RuntimeException("Event not found"));
+        when(ticketService.getEventInformation("NOTFOUND", 1, 1))
+                .thenThrow(new RuntimeException("Event not found"));
 
         mockMvc.perform(get("/api/events/{eventCode}/tickets/{ticketId}", "NOTFOUND", 1)
-                        .param("userId", "1"))
+                .param("userId", "1"))
                 .andExpect(status().is5xxServerError());
 
         verify(ticketService, times(1)).getEventInformation("NOTFOUND", 1, 1);
     }
 
     /**
-     * Verifica que la consulta de informacion falla cuando el ticket no existe.
+     * Verifies that the information query fails when the ticket does not exist.
      */
     @Test
-    @DisplayName("Get Event Information - Ticket no encontrado")
+    @DisplayName("Get Event Information - Ticket not found")
     @WithMockUser
     void testGetEventInformation_TicketNotFound() throws Exception {
-        when(ticketService.getEventInformation("MADRID", 999, 1)).thenThrow(new RuntimeException("Ticket not found"));
+        when(ticketService.getEventInformation("MADRID", 999, 1))
+                .thenThrow(new RuntimeException("Ticket not found"));
 
         mockMvc.perform(get("/api/events/{eventCode}/tickets/{ticketId}", "MADRID", 999)
-                        .param("userId", "1"))
+                .param("userId", "1"))
                 .andExpect(status().is5xxServerError());
 
         verify(ticketService, times(1)).getEventInformation("MADRID", 999, 1);
     }
 
     /**
-     * Verifica que la consulta de informacion falla cuando el usuario no esta autorizado.
+     * Verifies that the information query fails when the user is not authorized.
      */
     @Test
-    @DisplayName("Get Event Information - Usuario no autorizado")
+    @DisplayName("Get Event Information - User not authorized")
     @WithMockUser
     void testGetEventInformation_Unauthorized() throws Exception {
-        when(ticketService.getEventInformation("MADRID", 1, 999)).thenThrow(new RuntimeException("User not authorized"));
+        when(ticketService.getEventInformation("MADRID", 1, 999))
+                .thenThrow(new RuntimeException("User not authorized"));
 
         mockMvc.perform(get("/api/events/{eventCode}/tickets/{ticketId}", "MADRID", 1)
-                        .param("userId", "999"))
+                .param("userId", "999"))
                 .andExpect(status().is5xxServerError());
 
         verify(ticketService, times(1)).getEventInformation("MADRID", 1, 999);
     }
 
     /**
-     * Verifica que la consulta de informacion falla cuando no se proporciona el userId.
+     * Verifies that the information query fails when userId is not provided.
      */
     @Test
-    @DisplayName("Get Event Information - UserId null")
+    @DisplayName("Get Event Information - UserId is null")
     @WithMockUser
     void testGetEventInformation_NullUserId() throws Exception {
         mockMvc.perform(get("/api/events/{eventCode}/tickets/{ticketId}", "MADRID", 1))
-                                .andExpect(status().is5xxServerError());
+                .andExpect(status().is5xxServerError());
     }
 
     /**
-     * Verifica que se listan los tickets de un evento correctamente con paginacion.
+     * Verifies that tickets for an event are listed correctly with pagination.
      */
     @Test
-    @DisplayName("Get Event Tickets - Listar tickets exitosamente")
+    @DisplayName("Get Event Tickets - Successfully list tickets")
     @WithMockUser
     void testGetEventTickets_Success() throws Exception {
-        when(ticketService.getEventTickets(eq("MADRID"), anyInt(), anyInt(), anyString(), anyString(), anyString())).thenReturn(paginationDTO);
+        when(ticketService.getEventTickets(eq("MADRID"), anyInt(), anyInt(), anyString(), anyString(),
+                anyString())).thenReturn(paginationDTO);
 
         mockMvc.perform(get("/api/events/{eventCode}/tickets", "MADRID")
-                        .param("page", "1")
-                        .param("pageSize", "10")
-                        .param("sortBy", "ticketId")
-                        .param("sortDir", "ASC")
-                        .param("search", ""))
+                .param("page", "1")
+                .param("pageSize", "10")
+                .param("sortBy", "ticketId")
+                .param("sortDir", "ASC")
+                .param("search", ""))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.page.number").value(0))
                 .andExpect(jsonPath("$.page.size").value(10));
 
-        verify(ticketService, times(1)).getEventTickets(eq("MADRID"), anyInt(), anyInt(), anyString(), anyString(), anyString());
+        verify(ticketService, times(1)).getEventTickets(eq("MADRID"), anyInt(), anyInt(), anyString(),
+                anyString(), anyString());
     }
 
     /**
-     * Verifica que el listado de tickets funciona correctamente con filtro de busqueda.
+     * Verifies that ticket listing works correctly with a search filter.
      */
     @Test
-    @DisplayName("Get Event Tickets - Con búsqueda")
+    @DisplayName("Get Event Tickets - With search")
     @WithMockUser
     void testGetEventTickets_WithSearch() throws Exception {
-                when(ticketService.getEventTickets(eq("MADRID"), anyInt(), nullable(Integer.class), anyString(), anyString(), eq("Carlos"))).thenReturn(paginationDTO);
+        when(ticketService.getEventTickets(eq("MADRID"), anyInt(), nullable(Integer.class), anyString(),
+                anyString(), eq("Carlos"))).thenReturn(paginationDTO);
 
         mockMvc.perform(get("/api/events/{eventCode}/tickets", "MADRID")
-                        .param("page", "1")
-                        .param("search", "Carlos"))
+                .param("page", "1")
+                .param("search", "Carlos"))
                 .andExpect(status().isOk());
 
-        verify(ticketService, times(1)).getEventTickets(eq("MADRID"), anyInt(), nullable(Integer.class), anyString(), anyString(), eq("Carlos"));
+        verify(ticketService, times(1)).getEventTickets(eq("MADRID"), anyInt(), nullable(Integer.class),
+                anyString(), anyString(), eq("Carlos"));
     }
 
     /**
-     * Verifica que el listado de tickets falla cuando el evento no existe.
+     * Verifies that ticket listing fails when the event does not exist.
      */
     @Test
-    @DisplayName("Get Event Tickets - Evento no encontrado")
+    @DisplayName("Get Event Tickets - Event not found")
     @WithMockUser
     void testGetEventTickets_EventNotFound() throws Exception {
-                when(ticketService.getEventTickets(eq("NOTFND"), anyInt(), nullable(Integer.class), anyString(), anyString(), nullable(String.class))).thenThrow(new RuntimeException("Event not found"));
+        when(ticketService.getEventTickets(eq("NOTFND"), anyInt(), nullable(Integer.class), anyString(),
+                anyString(), nullable(String.class)))
+                .thenThrow(new RuntimeException("Event not found"));
 
         mockMvc.perform(get("/api/events/{eventCode}/tickets", "NOTFND")
-                        .param("page", "1"))
+                .param("page", "1"))
                 .andExpect(status().is5xxServerError());
 
-        verify(ticketService, times(1)).getEventTickets(eq("NOTFND"), anyInt(), nullable(Integer.class), anyString(), anyString(), nullable(String.class));
+        verify(ticketService, times(1)).getEventTickets(eq("NOTFND"), anyInt(), nullable(Integer.class),
+                anyString(), anyString(), nullable(String.class));
     }
 
     /**
-     * Verifica el comportamiento del listado de tickets cuando se proporciona una pagina invalida.
+     * Verifies ticket listing behavior when an invalid page is provided.
      */
     @Test
-    @DisplayName("Get Event Tickets - Página inválida")
+    @DisplayName("Get Event Tickets - Invalid page")
     @WithMockUser
     void testGetEventTickets_InvalidPage() throws Exception {
         mockMvc.perform(get("/api/events/{eventCode}/tickets", "ABC123")
-                        .param("page", "-1"))
-                                .andExpect(status().is5xxServerError());
+                .param("page", "-1"))
+                .andExpect(status().is5xxServerError());
     }
 
     /**
-     * Verifica que el listado de tickets funciona correctamente al ordenar por rol de forma descendente.
+     * Verifies that ticket listing works correctly when sorting by role in
+     * descending order.
      */
     @Test
-    @DisplayName("Get Event Tickets - Ordenar por rol")
+    @DisplayName("Get Event Tickets - Sort by role")
     @WithMockUser
     void testGetEventTickets_SortByRole() throws Exception {
-                when(ticketService.getEventTickets(eq("ABC123"), anyInt(), nullable(Integer.class), eq("role"), eq("DESC"), anyString())).thenReturn(paginationDTO);
+        when(ticketService.getEventTickets(eq("ABC123"), anyInt(), nullable(Integer.class), eq("role"),
+                eq("DESC"), anyString())).thenReturn(paginationDTO);
 
         mockMvc.perform(get("/api/events/{eventCode}/tickets", "ABC123")
-                        .param("page", "1")
-                        .param("sortBy", "role")
-                        .param("sortDir", "DESC"))
+                .param("page", "1")
+                .param("sortBy", "role")
+                .param("sortDir", "DESC"))
                 .andExpect(status().isOk());
 
-        verify(ticketService, times(1)).getEventTickets(eq("ABC123"), anyInt(), nullable(Integer.class), eq("role"), eq("DESC"), nullable(String.class));
+        verify(ticketService, times(1)).getEventTickets(eq("ABC123"), anyInt(), nullable(Integer.class),
+                eq("role"), eq("DESC"), nullable(String.class));
     }
 
     /**
-     * Verifica que la inscripcion de un usuario en un evento funciona correctamente.
+     * Verifies that enrolling a user in an event works correctly.
      */
     @Test
-    @DisplayName("Enroll User - Inscripción exitosa")
+    @DisplayName("Enroll User - Successful enrollment")
     @WithMockUser
     void testEnrollUser_Success() throws Exception {
         when(ticketService.enrollUserInEvent(any(EnrollUserDTO.class))).thenReturn(ticketDTO);
 
         mockMvc.perform(post("/api/events/enrollment")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(enrollUserDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(enrollUserDTO)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.ticketId").value(1))
                 .andExpect(jsonPath("$.role").value("GUEST"));
@@ -288,104 +302,107 @@ class TicketControllerTest {
     }
 
     /**
-     * Verifica que la inscripcion falla cuando el usuario ya esta inscrito en el evento.
+     * Verifies that enrollment fails when the user is already enrolled in the
+     * event.
      */
     @Test
-    @DisplayName("Enroll User - Usuario ya inscrito")
+    @DisplayName("Enroll User - User already enrolled")
     @WithMockUser
     void testEnrollUser_AlreadyEnrolled() throws Exception {
-        when(ticketService.enrollUserInEvent(any(EnrollUserDTO.class))).thenThrow(new RuntimeException("User already enrolled in this event"));
+        when(ticketService.enrollUserInEvent(any(EnrollUserDTO.class)))
+                .thenThrow(new RuntimeException("User already enrolled in this event"));
 
         mockMvc.perform(post("/api/events/enrollment")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(enrollUserDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(enrollUserDTO)))
                 .andExpect(status().is5xxServerError());
 
         verify(ticketService, times(1)).enrollUserInEvent(any(EnrollUserDTO.class));
     }
 
     /**
-     * Verifica que la inscripcion falla cuando el evento esta lleno.
+     * Verifies that enrollment fails when the event is full.
      */
     @Test
-    @DisplayName("Enroll User - Evento lleno")
+    @DisplayName("Enroll User - Event full")
     @WithMockUser
     void testEnrollUser_EventFull() throws Exception {
-        when(ticketService.enrollUserInEvent(any(EnrollUserDTO.class))).thenThrow(new RuntimeException("Event is at full capacity"));
+        when(ticketService.enrollUserInEvent(any(EnrollUserDTO.class)))
+                .thenThrow(new RuntimeException("Event is at full capacity"));
 
         mockMvc.perform(post("/api/events/enrollment")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(enrollUserDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(enrollUserDTO)))
                 .andExpect(status().is5xxServerError());
 
         verify(ticketService, times(1)).enrollUserInEvent(any(EnrollUserDTO.class));
     }
 
     /**
-     * Verifica que la inscripcion se rechaza cuando el codigo de evento es invalido.
+     * Verifies that enrollment is rejected when the event code is invalid.
      */
     @Test
-    @DisplayName("Enroll User - Código de evento inválido")
+    @DisplayName("Enroll User - Invalid event code")
     @WithMockUser
     void testEnrollUser_InvalidEventCode() throws Exception {
         EnrollUserDTO invalidDTO = EnrollUserDTO.builder()
                 .userId(1)
-                .eventCode("abc")  // Código inválido (debe ser 6 caracteres mayúsculas)
+                .eventCode("abc") // Invalid code (must be 6 uppercase characters)
                 .role("GUEST")
                 .guestNumber(2)
                 .build();
 
         mockMvc.perform(post("/api/events/enrollment")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidDTO)))
                 .andExpect(status().isBadRequest());
     }
 
     /**
-     * Verifica que la inscripcion se rechaza cuando el formato del codigo de evento es incorrecto.
+     * Verifies that enrollment is rejected when the event code format is incorrect.
      */
     @Test
-    @DisplayName("Enroll User - Código de evento formato incorrecto")
+    @DisplayName("Enroll User - Event code wrong format")
     @WithMockUser
     void testEnrollUser_WrongFormatEventCode() throws Exception {
         EnrollUserDTO wrongFormatDTO = EnrollUserDTO.builder()
                 .userId(1)
-                .eventCode("abc123")  // No es mayúsculas
+                .eventCode("abc123") // Not uppercase
                 .role("GUEST")
                 .guestNumber(2)
                 .build();
 
         mockMvc.perform(post("/api/events/enrollment")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(wrongFormatDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(wrongFormatDTO)))
                 .andExpect(status().isBadRequest());
     }
 
     /**
-     * Verifica el comportamiento de la inscripcion cuando se proporciona un numero de invitados negativo.
+     * Verifies enrollment behavior when a negative guest count is provided.
      */
     @Test
-    @DisplayName("Enroll User - Número de invitados negativo")
+    @DisplayName("Enroll User - Negative guest number")
     @WithMockUser
     void testEnrollUser_NegativeGuestNumber() throws Exception {
         EnrollUserDTO negativeGuestsDTO = EnrollUserDTO.builder()
                 .userId(1)
                 .eventCode("ABC123")
                 .role("GUEST")
-                .guestNumber(-1)  // Número negativo
+                .guestNumber(-1) // Negative number
                 .build();
 
         mockMvc.perform(post("/api/events/enrollment")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(negativeGuestsDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(negativeGuestsDTO)))
                 .andExpect(status().isCreated());
     }
 
     /**
-     * Verifica que la inscripcion falla cuando el usuario no existe.
+     * Verifies that enrollment fails when the user does not exist.
      */
     @Test
-    @DisplayName("Enroll User - Usuario no encontrado")
+    @DisplayName("Enroll User - User not found")
     @WithMockUser
     void testEnrollUser_UserNotFound() throws Exception {
         EnrollUserDTO invalidUserDTO = EnrollUserDTO.builder()
@@ -399,18 +416,18 @@ class TicketControllerTest {
                 .thenThrow(new RuntimeException("User not found"));
 
         mockMvc.perform(post("/api/events/enrollment")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidUserDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidUserDTO)))
                 .andExpect(status().is5xxServerError());
 
         verify(ticketService, times(1)).enrollUserInEvent(any(EnrollUserDTO.class));
     }
 
     /**
-     * Verifica que la inscripcion falla cuando el evento no existe.
+     * Verifies that enrollment fails when the event does not exist.
      */
     @Test
-    @DisplayName("Enroll User - Evento no encontrado")
+    @DisplayName("Enroll User - Event not found")
     @WithMockUser
     void testEnrollUser_EventNotFound() throws Exception {
         EnrollUserDTO invalidEventDTO = EnrollUserDTO.builder()
@@ -424,18 +441,18 @@ class TicketControllerTest {
                 .thenThrow(new RuntimeException("Event not found"));
 
         mockMvc.perform(post("/api/events/enrollment")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidEventDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidEventDTO)))
                 .andExpect(status().is5xxServerError());
 
         verify(ticketService, times(1)).enrollUserInEvent(any(EnrollUserDTO.class));
     }
 
     /**
-     * Verifica que la inscripcion falla cuando se proporciona un rol invalido.
+     * Verifies that enrollment fails when an invalid role is provided.
      */
     @Test
-    @DisplayName("Enroll User - Rol inválido")
+    @DisplayName("Enroll User - Invalid role")
     @WithMockUser
     void testEnrollUser_InvalidRole() throws Exception {
         EnrollUserDTO invalidRoleDTO = EnrollUserDTO.builder()
@@ -449,24 +466,24 @@ class TicketControllerTest {
                 .thenThrow(new RuntimeException("Invalid role"));
 
         mockMvc.perform(post("/api/events/enrollment")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidRoleDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidRoleDTO)))
                 .andExpect(status().is5xxServerError());
     }
 
     /**
-     * Verifica que la actualizacion de un ticket funciona correctamente con datos validos.
+     * Verifies that ticket update works correctly with valid data.
      */
     @Test
-    @DisplayName("Update Ticket - Actualización exitosa")
+    @DisplayName("Update Ticket - Successful update")
     @WithMockUser
     void testUpdateTicket_Success() throws Exception {
         when(ticketService.updateTicket(eq("ABC123"), eq(1), any(UpdateTicketDTO.class)))
                 .thenReturn(eventTicketDTO);
 
         mockMvc.perform(put("/api/events/{eventCode}/tickets/{ticketId}", "ABC123", 1)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateTicketDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateTicketDTO)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.ticket.ticketId").value(1));
 
@@ -474,28 +491,28 @@ class TicketControllerTest {
     }
 
     /**
-     * Verifica que la actualizacion falla cuando el ticket no existe.
+     * Verifies that update fails when the ticket does not exist.
      */
     @Test
-    @DisplayName("Update Ticket - Ticket no encontrado")
+    @DisplayName("Update Ticket - Ticket not found")
     @WithMockUser
     void testUpdateTicket_NotFound() throws Exception {
         when(ticketService.updateTicket(eq("ABC123"), eq(999), any(UpdateTicketDTO.class)))
                 .thenThrow(new RuntimeException("Ticket not found"));
 
         mockMvc.perform(put("/api/events/{eventCode}/tickets/{ticketId}", "ABC123", 999)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateTicketDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(updateTicketDTO)))
                 .andExpect(status().is5xxServerError());
 
         verify(ticketService, times(1)).updateTicket(eq("ABC123"), eq(999), any(UpdateTicketDTO.class));
     }
 
     /**
-     * Verifica que se puede cambiar el rol de un ticket a HOST correctamente.
+     * Verifies that a ticket role can be changed to HOST correctly.
      */
     @Test
-    @DisplayName("Update Ticket - Cambiar rol a HOST")
+    @DisplayName("Update Ticket - Change role to HOST")
     @WithMockUser
     void testUpdateTicket_ChangeToHost() throws Exception {
         UpdateTicketDTO hostDTO = UpdateTicketDTO.builder()
@@ -508,18 +525,18 @@ class TicketControllerTest {
                 .thenReturn(eventTicketDTO);
 
         mockMvc.perform(put("/api/events/{eventCode}/tickets/{ticketId}", "ABC123", 1)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(hostDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(hostDTO)))
                 .andExpect(status().isOk());
 
         verify(ticketService, times(1)).updateTicket(eq("ABC123"), eq(1), any(UpdateTicketDTO.class));
     }
 
     /**
-     * Verifica que se puede marcar la confirmacion de asistencia en un ticket.
+     * Verifies that attendance confirmation can be marked on a ticket.
      */
     @Test
-    @DisplayName("Update Ticket - Marcar asistencia")
+    @DisplayName("Update Ticket - Mark attendance")
     @WithMockUser
     void testUpdateTicket_MarkAttendance() throws Exception {
         UpdateTicketDTO attendanceDTO = UpdateTicketDTO.builder()
@@ -533,18 +550,18 @@ class TicketControllerTest {
                 .thenReturn(eventTicketDTO);
 
         mockMvc.perform(put("/api/events/{eventCode}/tickets/{ticketId}", "ABC123", 1)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(attendanceDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(attendanceDTO)))
                 .andExpect(status().isOk());
 
         verify(ticketService, times(1)).updateTicket(eq("ABC123"), eq(1), any(UpdateTicketDTO.class));
     }
 
     /**
-     * Verifica que se pueden actualizar las notas de un ticket correctamente.
+     * Verifies that ticket notes can be updated correctly.
      */
     @Test
-    @DisplayName("Update Ticket - Actualizar notas")
+    @DisplayName("Update Ticket - Update notes")
     @WithMockUser
     void testUpdateTicket_UpdateNotes() throws Exception {
         UpdateTicketDTO notesDTO = UpdateTicketDTO.builder()
@@ -558,38 +575,38 @@ class TicketControllerTest {
                 .thenReturn(eventTicketDTO);
 
         mockMvc.perform(put("/api/events/{eventCode}/tickets/{ticketId}", "ABC123", 1)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(notesDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(notesDTO)))
                 .andExpect(status().isOk());
 
         verify(ticketService, times(1)).updateTicket(eq("ABC123"), eq(1), any(UpdateTicketDTO.class));
     }
 
     /**
-     * Verifica que la actualizacion se rechaza cuando las notas exceden los 500 caracteres.
+     * Verifies that update is rejected when notes exceed 500 characters.
      */
     @Test
-    @DisplayName("Update Ticket - Notas demasiado largas")
+    @DisplayName("Update Ticket - Notes too long")
     @WithMockUser
     void testUpdateTicket_NotesTooLong() throws Exception {
         UpdateTicketDTO longNotesDTO = UpdateTicketDTO.builder()
                 .role("GUEST")
                 .guestNumber(2)
                 .assistConfirmation(false)
-                .notes("A".repeat(505))  // > 500 caracteres
+                .notes("A".repeat(505)) // > 500 characters
                 .build();
 
         mockMvc.perform(put("/api/events/{eventCode}/tickets/{ticketId}", "ABC123", 1)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(longNotesDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(longNotesDTO)))
                 .andExpect(status().isBadRequest());
     }
 
     /**
-     * Verifica el comportamiento de la actualizacion cuando el numero de invitados es negativo.
+     * Verifies update behavior when the guest number is negative.
      */
     @Test
-    @DisplayName("Update Ticket - Número de invitados negativo")
+    @DisplayName("Update Ticket - Negative guest number")
     @WithMockUser
     void testUpdateTicket_NegativeGuestNumber() throws Exception {
         UpdateTicketDTO negativeDTO = UpdateTicketDTO.builder()
@@ -599,16 +616,16 @@ class TicketControllerTest {
                 .build();
 
         mockMvc.perform(put("/api/events/{eventCode}/tickets/{ticketId}", "ABC123", 1)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(negativeDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(negativeDTO)))
                 .andExpect(status().isOk());
     }
 
     /**
-     * Verifica que la actualizacion falla cuando se proporciona un rol invalido.
+     * Verifies that update fails when an invalid role is provided.
      */
     @Test
-    @DisplayName("Update Ticket - Rol inválido")
+    @DisplayName("Update Ticket - Invalid role")
     @WithMockUser
     void testUpdateTicket_InvalidRole() throws Exception {
         UpdateTicketDTO invalidRoleDTO = UpdateTicketDTO.builder()
@@ -621,8 +638,8 @@ class TicketControllerTest {
                 .thenThrow(new RuntimeException("Invalid role"));
 
         mockMvc.perform(put("/api/events/{eventCode}/tickets/{ticketId}", "ABC123", 1)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidRoleDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidRoleDTO)))
                 .andExpect(status().is5xxServerError());
     }
 }

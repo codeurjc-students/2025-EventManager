@@ -11,13 +11,15 @@ import org.openqa.selenium.support.ui.Select;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Tests de Selenium para las vistas de eventos. Cubre la lista de eventos con filtros y paginacion, la creacion de nuevos eventos y la modificacion de eventos existentes con sus modos de lectura y edicion.
+ * Selenium tests for the event views. Covers the event list with filters and
+ * pagination, creating new events, and updating existing events in read-only
+ * and edit modes.
  */
 @DisplayName("Event Views Selenium Tests")
 public class EventViewsSeleniumTest extends BaseSeleniumTest {
 
     /**
-     * Autentica al usuario antes de cada test para tener acceso a las vistas de eventos.
+     * Authenticates the user before each test to access event views.
      */
     @BeforeEach
     public void authenticateUser() {
@@ -25,10 +27,11 @@ public class EventViewsSeleniumTest extends BaseSeleniumTest {
     }
 
     /**
-     * Verifica que la pagina de lista de eventos se carga correctamente con el filtro de rol y el boton de busqueda.
+     * Verifies that the event list page loads correctly with the role filter and
+     * search button.
      */
     @Test
-    @DisplayName("Event List View - Visualizar pagina de lista de eventos")
+    @DisplayName("Event List View - Display event list page")
     public void testEventListView_DisplayEvents() {
         navigateTo("/eventos");
 
@@ -38,10 +41,10 @@ public class EventViewsSeleniumTest extends BaseSeleniumTest {
     }
 
     /**
-     * Verifica que se pueden filtrar los eventos seleccionando el rol de anfitrion.
+     * Verifies that events can be filtered by selecting the Host role.
      */
     @Test
-    @DisplayName("Event List View - Filtrar eventos por rol Anfitrion")
+    @DisplayName("Event List View - Filter events by Host role")
     public void testEventListView_FilterByHost() {
         navigateTo("/eventos");
 
@@ -50,14 +53,16 @@ public class EventViewsSeleniumTest extends BaseSeleniumTest {
         clickElement(By.cssSelector(".search-btn"));
         waitForUiToSettle();
 
-        assertTrue(isElementPresent(By.cssSelector(".event-table")) || isElementPresent(By.cssSelector(".error-message")), "Deberia mostrar tabla de eventos o un mensaje");
+        assertTrue(
+                isElementPresent(By.cssSelector(".event-table")) || isElementPresent(By.cssSelector(".error-message")),
+                "Deberia mostrar tabla de eventos o un mensaje");
     }
 
     /**
-     * Verifica que se pueden filtrar los eventos seleccionando el rol de invitado.
+     * Verifies that events can be filtered by selecting the Guest role.
      */
     @Test
-    @DisplayName("Event List View - Filtrar eventos por rol Invitado")
+    @DisplayName("Event List View - Filter events by Guest role")
     public void testEventListView_FilterByGuest() {
         navigateTo("/eventos");
 
@@ -66,26 +71,29 @@ public class EventViewsSeleniumTest extends BaseSeleniumTest {
         clickElement(By.cssSelector(".search-btn"));
         waitForUiToSettle();
 
-        assertTrue(isElementPresent(By.cssSelector(".event-table")) || isElementPresent(By.cssSelector(".error-message")), "Deberia mostrar tabla de eventos o un mensaje");
+        assertTrue(
+                isElementPresent(By.cssSelector(".event-table")) || isElementPresent(By.cssSelector(".error-message")),
+                "Deberia mostrar tabla de eventos o un mensaje");
     }
 
     /**
-     * Verifica que el boton de busqueda permanece deshabilitado hasta que se selecciona un rol.
+     * Verifies that the search button remains disabled until a role is selected.
      */
     @Test
-    @DisplayName("Event List View - Boton buscar deshabilitado sin seleccionar rol")
+    @DisplayName("Event List View - Search button disabled without role")
     public void testEventListView_SearchDisabledWithoutRole() {
         navigateTo("/eventos");
 
         org.openqa.selenium.WebElement searchBtn = waitForElement(By.cssSelector(".search-btn"));
-        assertFalse(searchBtn.isEnabled(), "El boton de busqueda deberia estar deshabilitado si no se selecciona un rol");
+        assertFalse(searchBtn.isEnabled(),
+                "El boton de busqueda deberia estar deshabilitado si no se selecciona un rol");
     }
 
     /**
-     * Verifica que al pulsar en el enlace de informacion de un evento se navega a sus detalles.
+     * Verifies that clicking the event info link navigates to event details.
      */
     @Test
-    @DisplayName("Event List View - Ver detalles de un evento desde la tabla")
+    @DisplayName("Event List View - View event details from table")
     public void testEventListView_ViewEventDetails() {
         navigateTo("/eventos");
 
@@ -103,10 +111,10 @@ public class EventViewsSeleniumTest extends BaseSeleniumTest {
     }
 
     /**
-     * Verifica que la paginacion con flechas funciona correctamente en la tabla de eventos.
+     * Verifies that arrow pagination works correctly in the events table.
      */
     @Test
-    @DisplayName("Event List View - Paginacion con flechas")
+    @DisplayName("Event List View - Arrow pagination")
     public void testEventListView_Pagination() {
         navigateTo("/eventos");
 
@@ -119,15 +127,17 @@ public class EventViewsSeleniumTest extends BaseSeleniumTest {
             clickElement(By.cssSelector(".pagination-arrow:last-child"));
             waitForUiToSettle(Duration.ofMillis(1200));
 
-            assertTrue(isElementPresent(By.cssSelector(".event-table")), "Deberia mostrar la segunda pagina de eventos");
+            assertTrue(isElementPresent(By.cssSelector(".event-table")),
+                    "Deberia mostrar la segunda pagina de eventos");
         }
     }
 
     /**
-     * Verifica que se puede crear un evento rellenando todos los campos obligatorios con datos validos.
+     * Verifies that an event can be created by filling in all required fields with
+     * valid data.
      */
     @Test
-    @DisplayName("Event Create View - Crear evento exitosamente")
+    @DisplayName("Event Create View - Create event successfully")
     public void testEventCreateView_CreateEventSuccessfully() {
         navigateTo("/crear-evento");
         String timestamp = String.valueOf(System.currentTimeMillis());
@@ -141,16 +151,15 @@ public class EventViewsSeleniumTest extends BaseSeleniumTest {
         waitForUiToSettle();
 
         assertTrue(
-            isSuccessMessagePresent() || isErrorMessagePresent(),
-            "Deberia mostrar feedback de éxito o error tras crear evento"
-        );
+                isSuccessMessagePresent() || isErrorMessagePresent(),
+                "Deberia mostrar feedback de éxito o error tras crear evento");
     }
 
     /**
-     * Verifica que la creacion de evento falla cuando el nombre excede la longitud maxima permitida.
+     * Verifies that event creation fails when the name exceeds the maximum length.
      */
     @Test
-    @DisplayName("Event Create View - Error con nombre demasiado largo")
+    @DisplayName("Event Create View - Error with name too long")
     public void testEventCreateView_NameTooLong() {
         navigateTo("/crear-evento");
         String longName = "A".repeat(105);
@@ -163,14 +172,16 @@ public class EventViewsSeleniumTest extends BaseSeleniumTest {
         clickElement(By.cssSelector("button[type='submit']"));
         waitForUiToSettle(Duration.ofMillis(1200));
 
-        assertTrue(isErrorMessagePresent() || getCurrentUrl().contains("/crear-evento"), "Deberia mostrar error o permanecer en la pagina");
+        assertTrue(isErrorMessagePresent() || getCurrentUrl().contains("/crear-evento"),
+                "Deberia mostrar error o permanecer en la pagina");
     }
 
     /**
-     * Verifica que la creacion de evento falla cuando la descripcion excede la longitud maxima permitida.
+     * Verifies that event creation fails when the description exceeds the maximum
+     * length.
      */
     @Test
-    @DisplayName("Event Create View - Error con descripcion demasiado larga")
+    @DisplayName("Event Create View - Error with description too long")
     public void testEventCreateView_DescriptionTooLong() {
         navigateTo("/crear-evento");
         String longDescription = "A".repeat(505);
@@ -183,14 +194,15 @@ public class EventViewsSeleniumTest extends BaseSeleniumTest {
         clickElement(By.cssSelector("button[type='submit']"));
         waitForUiToSettle(Duration.ofMillis(1200));
 
-        assertTrue(isErrorMessagePresent() || getCurrentUrl().contains("/crear-evento"), "Deberia mostrar error o permanecer en la pagina");
+        assertTrue(isErrorMessagePresent() || getCurrentUrl().contains("/crear-evento"),
+                "Deberia mostrar error o permanecer en la pagina");
     }
 
     /**
-     * Verifica que el boton de envio esta deshabilitado mientras los campos obligatorios estan vacios.
+     * Verifies that the submit button is disabled while required fields are empty.
      */
     @Test
-    @DisplayName("Event Create View - Boton deshabilitado con campos vacios")
+    @DisplayName("Event Create View - Submit disabled with empty fields")
     public void testEventCreateView_SubmitDisabledWithEmptyFields() {
         navigateTo("/crear-evento");
 
@@ -199,16 +211,15 @@ public class EventViewsSeleniumTest extends BaseSeleniumTest {
         waitForUiToSettle(Duration.ofMillis(900));
 
         assertTrue(
-            !submitBtn.isEnabled() || getCurrentUrl().contains("/crear-evento") || isErrorMessagePresent(),
-            "Con campos vacíos, no debería completar la creación del evento"
-        );
+                !submitBtn.isEnabled() || getCurrentUrl().contains("/crear-evento") || isErrorMessagePresent(),
+                "Con campos vacíos, no debería completar la creación del evento");
     }
 
     /**
-     * Verifica que la creacion de evento falla cuando se selecciona una fecha anterior a la actual.
+     * Verifies that event creation fails when a past date is selected.
      */
     @Test
-    @DisplayName("Event Create View - Error con fecha en el pasado")
+    @DisplayName("Event Create View - Error with past date")
     public void testEventCreateView_PastDate() {
         navigateTo("/crear-evento");
 
@@ -220,14 +231,16 @@ public class EventViewsSeleniumTest extends BaseSeleniumTest {
         clickElement(By.cssSelector("button[type='submit']"));
         waitForUiToSettle(Duration.ofMillis(1200));
 
-        assertTrue(isErrorMessagePresent() || getCurrentUrl().contains("/crear-evento"), "Deberia mostrar error con fecha en el pasado");
+        assertTrue(isErrorMessagePresent() || getCurrentUrl().contains("/crear-evento"),
+                "Deberia mostrar error con fecha en el pasado");
     }
 
     /**
-     * Verifica que la vista de modificar evento inicia en modo solo lectura con los campos deshabilitados.
+     * Verifies that the event update view starts in read-only mode with disabled
+     * fields.
      */
     @Test
-    @DisplayName("Event Update View - Vista inicia en modo solo lectura")
+    @DisplayName("Event Update View - Starts in read-only mode")
     public void testEventUpdateView_StartsInReadOnlyMode() {
         navigateTo("/eventos");
 
@@ -250,10 +263,10 @@ public class EventViewsSeleniumTest extends BaseSeleniumTest {
     }
 
     /**
-     * Verifica que al pulsar el boton Editar los campos se habilitan para su modificacion.
+     * Verifies that clicking Edit enables the fields for modification.
      */
     @Test
-    @DisplayName("Event Update View - Habilitar edicion al pulsar Editar")
+    @DisplayName("Event Update View - Enable edit mode when clicking Edit")
     public void testEventUpdateView_EnableEditMode() {
         navigateTo("/eventos");
 
@@ -274,16 +287,18 @@ public class EventViewsSeleniumTest extends BaseSeleniumTest {
 
             org.openqa.selenium.WebElement nameField = waitForElement(By.id("event-name"));
             assertTrue(nameField.isEnabled(), "El campo nombre deberia estar habilitado tras pulsar Editar");
-            assertTrue(isElementPresent(By.xpath("//button[text()='Guardar cambios']")), "Deberia mostrar el boton Guardar cambios");
+            assertTrue(isElementPresent(By.xpath("//button[text()='Guardar cambios']")),
+                    "Deberia mostrar el boton Guardar cambios");
             assertTrue(isElementPresent(By.xpath("//button[text()='Cancelar']")), "Deberia mostrar el boton Cancelar");
         }
     }
 
     /**
-     * Verifica que los cambios en un evento se guardan correctamente al pulsar Guardar cambios.
+     * Verifies that changes to an event are saved correctly when clicking Save
+     * changes.
      */
     @Test
-    @DisplayName("Event Update View - Actualizar evento exitosamente")
+    @DisplayName("Event Update View - Update event successfully")
     public void testEventUpdateView_UpdateEventSuccessfully() {
         navigateTo("/eventos");
 
@@ -312,10 +327,11 @@ public class EventViewsSeleniumTest extends BaseSeleniumTest {
     }
 
     /**
-     * Verifica que al cancelar la edicion los campos vuelven a modo solo lectura sin guardar cambios.
+     * Verifies that canceling the edit returns fields to read-only mode without
+     * saving changes.
      */
     @Test
-    @DisplayName("Event Update View - Cancelar edicion")
+    @DisplayName("Event Update View - Cancel edit")
     public void testEventUpdateView_CancelEdit() {
         navigateTo("/eventos");
 

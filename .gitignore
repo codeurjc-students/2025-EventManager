@@ -60,3 +60,7 @@ truststore*
 
 # Docker image exports
 *.tar
+
+# act (GitHub Actions local emulator) artifacts and logs
+.act-artifacts/
+act-*.txt

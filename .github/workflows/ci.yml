@@ -79,8 +79,8 @@ jobs:
           name: build-target
           path: .
 
-      - name: Run unit profile tests
-        run: mvn -B -Punit test
+      - name: Run unit profile tests and JaCoCo coverage report
+        run: mvn -B -Punit verify
 
       - name: Upload surefire reports (unit)
         if: always()
@@ -90,25 +90,25 @@ jobs:
           path: target/surefire-reports/**
           if-no-files-found: ignore
 
+      - name: Upload JaCoCo site (unit)
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-unit-site
+          path: target/site/jacoco/**
+          if-no-files-found: error
+
+      - name: Upload JaCoCo XML (unit)
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-unit-xml
+          path: target/site/jacoco/jacoco.xml
+          if-no-files-found: error
+
   selenium:
-    name: Selenium tests (${{ matrix.suiteName }})
+    name: Selenium tests
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    needs: build
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - suiteName: Auth
-            suiteInclude: "**/selenium/views/AuthViewsSeleniumTest.java"
-          - suiteName: Home
-            suiteInclude: "**/selenium/views/HomeViewSeleniumTest.java"
-          - suiteName: Event
-            suiteInclude: "**/selenium/views/EventViewsSeleniumTest.java"
-          - suiteName: User
-            suiteInclude: "**/selenium/views/UserViewsSeleniumTest.java"
-          - suiteName: GiftAndTicket
-            suiteInclude: "**/selenium/views/GiftAndTicketViewsSeleniumTest.java"
+    needs: unit
 
     services:
       postgres:
@@ -159,14 +159,17 @@ jobs:
 
       - name: Start MinIO
         run: |
-          docker run -d --name minio-ci \
+          MINIO_CONTAINER_NAME="minio-ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${GITHUB_JOB}"
+          sudo docker rm -f minio-ci >/dev/null 2>&1 || true
+          sudo docker rm -f "$MINIO_CONTAINER_NAME" >/dev/null 2>&1 || true
+          sudo docker run -d --name "$MINIO_CONTAINER_NAME" \
             -p 9000:9000 -p 9001:9001 \
             -e MINIO_ROOT_USER=${MINIO_ACCESS_KEY} \
             -e MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY} \
             minio/minio:RELEASE.2024-01-16T16-07-38Z server /data --console-address ":9001"
 
-      - name: Run selenium profile tests (shard)
-        run: mvn -B -Pselenium,selenium-ci -Dselenium.includes="${{ matrix.suiteInclude }}" test
+      - name: Run selenium profile tests + JaCoCo report
+        run: mvn -B -Pselenium,selenium-ci generate-sources test jacoco:report
 
       - name: Upload surefire reports (selenium)
         if: always()
@@ -176,55 +179,30 @@ jobs:
           path: target/surefire-reports/**
           if-no-files-found: ignore
 
+      - name: Upload JaCoCo site (selenium)
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-selenium-site
+          path: target/site/jacoco/**
+          if-no-files-found: error
+
+      - name: Upload JaCoCo XML (selenium)
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-selenium-xml
+          path: target/site/jacoco/jacoco.xml
+          if-no-files-found: error
+
       - name: Upload backend startup log
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: backend-log-${{ matrix.suiteName }}
+          name: backend-log
           path: app.log
           if-no-files-found: ignore
 
-  coverage:
-    name: Coverage (JaCoCo)
-    runs-on: ubuntu-latest
-    timeout-minutes: 35
-    needs: build
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
-          cache: maven
-
-      - name: Install Maven
+      - name: Cleanup MinIO
+        if: always()
         run: |
-          sudo apt-get update
-          sudo apt-get install -y maven
-
-      - name: Download build outputs
-        uses: actions/download-artifact@v4
-        with:
-          name: build-target
-          path: .
-
-      - name: Run verify with unit profile (JaCoCo report)
-        run: mvn -B -Punit verify
-
-      - name: Upload JaCoCo site
-        uses: actions/upload-artifact@v4
-        with:
-          name: jacoco-site
-          path: target/site/jacoco/**
-          if-no-files-found: error
-
-      - name: Upload JaCoCo XML
-        uses: actions/upload-artifact@v4
-        with:
-          name: jacoco-xml
-          path: target/site/jacoco/jacoco.xml
-          if-no-files-found: error
+          sudo docker rm -f minio-ci >/dev/null 2>&1 || true
+          sudo docker rm -f "minio-ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${GITHUB_JOB}" >/dev/null 2>&1 || true

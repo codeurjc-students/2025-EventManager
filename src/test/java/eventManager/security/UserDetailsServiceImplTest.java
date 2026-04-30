@@ -21,7 +21,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Tests unitarios para UserDetailsServiceImpl, que carga los datos del usuario desde el repositorio para la autenticacion de Spring Security.
+ * Unit tests for UserDetailsServiceImpl, which loads user data from the
+ * repository for Spring Security authentication.
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserDetailsServiceImpl Tests")
@@ -50,10 +51,11 @@ class UserDetailsServiceImplTest {
     }
 
     /**
-     * Verifica que se retorna un UserDetails con el rol correcto cuando el usuario existe.
+     * Verifies that a UserDetails with the correct role is returned when the user
+     * exists.
      */
     @Test
-    @DisplayName("loadUserByUsername - Usuario encontrado retorna UserDetails con ROLE_USER")
+    @DisplayName("loadUserByUsername - User found returns UserDetails with ROLE_USER")
     void testLoadUserByUsername_Success() {
         when(userRepository.findByUsername("carlos.martinez")).thenReturn(Optional.of(testUser));
 
@@ -68,14 +70,16 @@ class UserDetailsServiceImplTest {
     }
 
     /**
-     * Verifica que se lanza UsernameNotFoundException cuando el usuario no existe en el repositorio.
+     * Verifies that UsernameNotFoundException is thrown when the user does not
+     * exist in the repository.
      */
     @Test
-    @DisplayName("loadUserByUsername - Usuario no encontrado lanza UsernameNotFoundException")
+    @DisplayName("loadUserByUsername - User not found throws UsernameNotFoundException")
     void testLoadUserByUsername_NotFound() {
         when(userRepository.findByUsername("nonexistent")).thenReturn(Optional.empty());
 
-        UsernameNotFoundException exception = assertThrows(UsernameNotFoundException.class, () -> userDetailsService.loadUserByUsername("nonexistent"));
+        UsernameNotFoundException exception = assertThrows(UsernameNotFoundException.class,
+                () -> userDetailsService.loadUserByUsername("nonexistent"));
 
         assertEquals(Constantes.MESSAGE_USER_NOT_REGISTERED, exception.getMessage());
         verify(userRepository).findByUsername("nonexistent");

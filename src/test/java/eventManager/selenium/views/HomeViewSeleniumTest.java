@@ -9,13 +9,15 @@ import org.openqa.selenium.By;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Tests de Selenium para la vista principal (Home/Dashboard). Comprueba que el dashboard se muestra correctamente tras el login, que los enlaces de navegacion funcionan y que las rutas protegidas redirigen al login cuando no hay sesion activa.
+ * Selenium tests for the main view (Home/Dashboard). Verifies that the
+ * dashboard is shown after login, navigation links work, and protected routes
+ * redirect to login when there is no active session.
  */
 @DisplayName("Home View Selenium Tests")
 public class HomeViewSeleniumTest extends BaseSeleniumTest {
 
     /**
-     * Autentica al usuario antes de cada test para tener acceso a las vistas protegidas.
+     * Authenticates the user before each test to access protected views.
      */
     @BeforeEach
     public void authenticateUser() {
@@ -23,23 +25,25 @@ public class HomeViewSeleniumTest extends BaseSeleniumTest {
     }
 
     /**
-     * Verifica que tras el login se muestra el dashboard con el mensaje de bienvenida.
+     * Verifies that after login the dashboard is shown with the welcome message.
      */
     @Test
-    @DisplayName("Home View - Muestra dashboard tras login")
+    @DisplayName("Home View - Shows dashboard after login")
     public void testHomeView_DisplayAfterLogin() {
         navigateTo("/");
 
         assertTrue(isElementPresent(By.cssSelector(".welcome-box")), "Deberia mostrar el cuadro de bienvenida");
         String welcomeText = getElementText(By.cssSelector(".welcome-box h1"));
-        assertTrue(welcomeText.contains("Bienvenido") || welcomeText.contains("EventManager"), "Deberia mostrar el mensaje de bienvenida a EventManager");
+        assertTrue(welcomeText.contains("Bienvenido") || welcomeText.contains("EventManager"),
+                "Deberia mostrar el mensaje de bienvenida a EventManager");
     }
 
     /**
-     * Verifica que el menu de navegacion con sus secciones se muestra en la pagina principal.
+     * Verifies that the navigation menu and its sections are shown on the home
+     * page.
      */
     @Test
-    @DisplayName("Home View - Muestra menu de navegacion")
+    @DisplayName("Home View - Shows navigation menu")
     public void testHomeView_DisplayNavigationMenu() {
         navigateTo("/");
 
@@ -48,10 +52,10 @@ public class HomeViewSeleniumTest extends BaseSeleniumTest {
     }
 
     /**
-     * Verifica que el enlace del menu lleva correctamente a la lista de eventos.
+     * Verifies that the menu link navigates to the event list.
      */
     @Test
-    @DisplayName("Home View - Navegar a lista de eventos")
+    @DisplayName("Home View - Navigate to event list")
     public void testHomeView_NavigateToEventList() {
         navigateTo("/");
 
@@ -62,10 +66,10 @@ public class HomeViewSeleniumTest extends BaseSeleniumTest {
     }
 
     /**
-     * Verifica que el enlace del menu lleva correctamente a la pagina de creacion de evento.
+     * Verifies that the menu link navigates to the event creation page.
      */
     @Test
-    @DisplayName("Home View - Navegar a crear evento")
+    @DisplayName("Home View - Navigate to create event")
     public void testHomeView_NavigateToCreateEvent() {
         navigateTo("/");
 
@@ -76,10 +80,10 @@ public class HomeViewSeleniumTest extends BaseSeleniumTest {
     }
 
     /**
-     * Verifica que el enlace del menu lleva correctamente a la pagina de inscripcion en evento.
+     * Verifies that the menu link navigates to the event enrollment page.
      */
     @Test
-    @DisplayName("Home View - Navegar a inscribirse en evento")
+    @DisplayName("Home View - Navigate to join event")
     public void testHomeView_NavigateToJoinEvent() {
         navigateTo("/");
 
@@ -90,10 +94,10 @@ public class HomeViewSeleniumTest extends BaseSeleniumTest {
     }
 
     /**
-     * Verifica que el enlace del menu lleva correctamente a la pagina de actualizacion de perfil.
+     * Verifies that the menu link navigates to the profile update page.
      */
     @Test
-    @DisplayName("Home View - Navegar a actualizar perfil")
+    @DisplayName("Home View - Navigate to update profile")
     public void testHomeView_NavigateToUpdateProfile() {
         navigateTo("/");
 
@@ -104,10 +108,10 @@ public class HomeViewSeleniumTest extends BaseSeleniumTest {
     }
 
     /**
-     * Verifica que el enlace del menu lleva correctamente a la pagina de cambio de contrasena.
+     * Verifies that the menu link navigates to the password change page.
      */
     @Test
-    @DisplayName("Home View - Navegar a actualizar contrasena")
+    @DisplayName("Home View - Navigate to update password")
     public void testHomeView_NavigateToUpdatePassword() {
         navigateTo("/");
 
@@ -118,10 +122,11 @@ public class HomeViewSeleniumTest extends BaseSeleniumTest {
     }
 
     /**
-     * Verifica que un usuario sin sesion activa es redirigido al login al intentar acceder a una ruta protegida.
+     * Verifies that a user without an active session is redirected to login when
+     * accessing a protected route.
      */
     @Test
-    @DisplayName("Home View - Redirige a login si no autenticado")
+    @DisplayName("Home View - Redirects to login when unauthenticated")
     public void testHomeView_RedirectsUnauthenticated() {
         driver.manage().deleteAllCookies();
         ((org.openqa.selenium.JavascriptExecutor) driver)
@@ -130,6 +135,7 @@ public class HomeViewSeleniumTest extends BaseSeleniumTest {
         navigateTo("/eventos");
         sleep(2000);
 
-        assertTrue(getCurrentUrl().contains("/iniciar-sesion"), "Deberia redirigir a la pagina de login si no esta autenticado");
+        assertTrue(getCurrentUrl().contains("/iniciar-sesion"),
+                "Deberia redirigir a la pagina de login si no esta autenticado");
     }
 }

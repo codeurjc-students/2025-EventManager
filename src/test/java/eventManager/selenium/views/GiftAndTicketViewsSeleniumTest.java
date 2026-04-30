@@ -11,13 +11,15 @@ import java.time.Duration;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Tests de Selenium para las vistas de regalos y tickets. Cubre la inscripcion a eventos, la modificacion de datos de asistencia, la consulta de detalles de evento con acciones de anfitrion y la gestion de regalos (crear, editar y contribuir).
+ * Selenium tests for gift and ticket views. Covers event enrollment, attendance
+ * updates, event detail access with host actions, and gift management (create,
+ * edit, contribute).
  */
 @DisplayName("Gift and Ticket Views Selenium Tests")
 public class GiftAndTicketViewsSeleniumTest extends BaseSeleniumTest {
 
     /**
-     * Autentica al usuario antes de cada test para tener acceso a las vistas de regalos y tickets.
+     * Authenticates the user before each test to access gift and ticket views.
      */
     @BeforeEach
     public void authenticateUser() {
@@ -25,10 +27,11 @@ public class GiftAndTicketViewsSeleniumTest extends BaseSeleniumTest {
     }
 
     /**
-     * Verifica que el formulario de inscripcion muestra los campos de codigo de evento, invitados y notas.
+     * Verifies that the enrollment form shows event code, guest count, and notes
+     * fields.
      */
     @Test
-    @DisplayName("Ticket Event Join View - Visualizar formulario de inscripcion")
+    @DisplayName("Ticket Event Join View - Display enrollment form")
     public void testTicketEventJoinView_DisplayForm() {
         navigateTo("/inscribirse-evento");
 
@@ -38,10 +41,11 @@ public class GiftAndTicketViewsSeleniumTest extends BaseSeleniumTest {
     }
 
     /**
-     * Verifica que se puede enviar el formulario de inscripcion con un codigo de evento y datos de asistencia.
+     * Verifies that the enrollment form can be submitted with an event code and
+     * attendance data.
      */
     @Test
-    @DisplayName("Ticket Event Join View - Inscribirse a un evento exitosamente")
+    @DisplayName("Ticket Event Join View - Successfully join an event")
     public void testTicketEventJoinView_JoinEventSuccessfully() {
         navigateTo("/inscribirse-evento");
 
@@ -55,10 +59,11 @@ public class GiftAndTicketViewsSeleniumTest extends BaseSeleniumTest {
     }
 
     /**
-     * Verifica que se muestra un error al intentar inscribirse con un codigo de evento que no existe.
+     * Verifies that an error is shown when enrolling with a non-existent event
+     * code.
      */
     @Test
-    @DisplayName("Ticket Event Join View - Error con codigo de evento invalido")
+    @DisplayName("Ticket Event Join View - Error with invalid event code")
     public void testTicketEventJoinView_InvalidEventCode() {
         navigateTo("/inscribirse-evento");
 
@@ -70,10 +75,10 @@ public class GiftAndTicketViewsSeleniumTest extends BaseSeleniumTest {
     }
 
     /**
-     * Verifica que se rechaza un numero de invitados negativo al inscribirse a un evento.
+     * Verifies that a negative guest number is rejected when enrolling in an event.
      */
     @Test
-    @DisplayName("Ticket Event Join View - Error con numero de invitados negativo")
+    @DisplayName("Ticket Event Join View - Error with negative guest number")
     public void testTicketEventJoinView_NegativeGuestNumber() {
         navigateTo("/inscribirse-evento");
 
@@ -82,28 +87,31 @@ public class GiftAndTicketViewsSeleniumTest extends BaseSeleniumTest {
         clickElement(By.cssSelector("button[type='submit']"));
         waitForUiToSettle(Duration.ofMillis(1200));
 
-        assertTrue(isErrorMessagePresent() || getCurrentUrl().contains("/inscribirse-evento"), "Deberia mostrar error con numero negativo");
+        assertTrue(isErrorMessagePresent() || getCurrentUrl().contains("/inscribirse-evento"),
+                "Deberia mostrar error con numero negativo");
     }
 
     /**
-     * Verifica que el formulario no se envia si no se introduce un codigo de evento.
+     * Verifies that the form is not submitted if no event code is provided.
      */
     @Test
-    @DisplayName("Ticket Event Join View - Inscripcion sin codigo de evento")
+    @DisplayName("Ticket Event Join View - Enrollment without event code")
     public void testTicketEventJoinView_EmptyEventCode() {
         navigateTo("/inscribirse-evento");
 
         clickElement(By.cssSelector("button[type='submit']"));
         waitForUiToSettle(Duration.ofMillis(700));
 
-        assertTrue(getCurrentUrl().contains("/inscribirse-evento"), "Deberia permanecer en la pagina sin codigo de evento");
+        assertTrue(getCurrentUrl().contains("/inscribirse-evento"),
+                "Deberia permanecer en la pagina sin codigo de evento");
     }
 
     /**
-     * Verifica que los campos de asistencia estan deshabilitados en modo solo lectura al acceder a la vista.
+     * Verifies that attendance fields are disabled in read-only mode when accessing
+     * the view.
      */
     @Test
-    @DisplayName("Ticket Event Update View - Campos deshabilitados en modo lectura")
+    @DisplayName("Ticket Event Update View - Fields disabled in read-only mode")
     public void testTicketEventUpdateView_ReadOnlyMode() {
         navigateTo("/eventos");
         Select roleSelect = new Select(waitForElement(By.id("role")));
@@ -120,17 +128,18 @@ public class GiftAndTicketViewsSeleniumTest extends BaseSeleniumTest {
                 waitForUiToSettle(Duration.ofMillis(1200));
 
                 org.openqa.selenium.WebElement guestField = waitForElement(By.id("guest-number"));
-                assertFalse(guestField.isEnabled(), "El campo acompanantes deberia estar deshabilitado en modo lectura");
+                assertFalse(guestField.isEnabled(),
+                        "El campo acompanantes deberia estar deshabilitado en modo lectura");
                 assertTrue(isElementPresent(By.xpath("//button[text()='Editar']")), "Deberia mostrar el boton Editar");
             }
         }
     }
 
     /**
-     * Verifica que se pueden editar y guardar los datos de asistencia de un ticket correctamente.
+     * Verifies that attendance data for a ticket can be edited and saved correctly.
      */
     @Test
-    @DisplayName("Ticket Event Update View - Habilitar edicion y guardar cambios")
+    @DisplayName("Ticket Event Update View - Enable edit and save changes")
     public void testTicketEventUpdateView_EditAndSave() {
         navigateTo("/eventos");
         Select roleSelect = new Select(waitForElement(By.id("role")));
@@ -160,16 +169,17 @@ public class GiftAndTicketViewsSeleniumTest extends BaseSeleniumTest {
                 clickElement(By.xpath("//button[text()='Guardar cambios']"));
                 waitForUiToSettle();
 
-                assertTrue(isSuccessMessagePresent() || getCurrentUrl().contains("/eventos"), "Deberia guardar los cambios exitosamente");
+                assertTrue(isSuccessMessagePresent() || getCurrentUrl().contains("/eventos"),
+                        "Deberia guardar los cambios exitosamente");
             }
         }
     }
 
     /**
-     * Verifica que al cancelar la edicion de un ticket los campos vuelven a modo solo lectura.
+     * Verifies that canceling ticket edits returns fields to read-only mode.
      */
     @Test
-    @DisplayName("Ticket Event Update View - Cancelar edicion")
+    @DisplayName("Ticket Event Update View - Cancel edit")
     public void testTicketEventUpdateView_CancelEdit() {
         navigateTo("/eventos");
         Select roleSelect = new Select(waitForElement(By.id("role")));
@@ -199,10 +209,11 @@ public class GiftAndTicketViewsSeleniumTest extends BaseSeleniumTest {
     }
 
     /**
-     * Verifica que los detalles de un evento se muestran con la tabla de informacion y la seccion de acciones.
+     * Verifies that event details are shown with the information table and actions
+     * section.
      */
     @Test
-    @DisplayName("Ticket Event Detail View - Visualizar informacion del evento")
+    @DisplayName("Ticket Event Detail View - Display event information")
     public void testTicketEventDetailView_DisplayEventDetails() {
         navigateTo("/eventos");
         Select roleSelect = new Select(waitForElement(By.id("role")));
@@ -214,16 +225,17 @@ public class GiftAndTicketViewsSeleniumTest extends BaseSeleniumTest {
             clickElement(By.cssSelector(".info-link"));
             waitForUiToSettle(Duration.ofMillis(1200));
 
-            assertTrue(isElementPresent(By.cssSelector(".info-table")), "Deberia mostrar la tabla de informacion del evento");
+            assertTrue(isElementPresent(By.cssSelector(".info-table")),
+                    "Deberia mostrar la tabla de informacion del evento");
             assertTrue(isElementPresent(By.cssSelector(".actions-section")), "Deberia mostrar la seccion de acciones");
         }
     }
 
     /**
-     * Verifica que un anfitrion puede ver los botones de modificar evento y consultar invitados.
+     * Verifies that a host can see the edit event and view guests buttons.
      */
     @Test
-    @DisplayName("Ticket Event Detail View - Botones de accion visibles para HOST")
+    @DisplayName("Ticket Event Detail View - Action buttons visible for HOST")
     public void testTicketEventDetailView_HostActionButtons() {
         navigateTo("/eventos");
         Select roleSelect = new Select(waitForElement(By.id("role")));
@@ -235,18 +247,21 @@ public class GiftAndTicketViewsSeleniumTest extends BaseSeleniumTest {
             clickElement(By.cssSelector(".info-link"));
             waitForUiToSettle(Duration.ofMillis(1200));
 
-            boolean hostButtonsVisible = isElementPresent(By.xpath("//button[contains(text(),'Modificar informacion del evento')]"))
+            boolean hostButtonsVisible = isElementPresent(
+                    By.xpath("//button[contains(text(),'Modificar informacion del evento')]"))
                     && isElementPresent(By.xpath("//button[contains(text(),'Consultar invitados')]"));
-            boolean guestActionsVisible = isElementPresent(By.xpath("//button[contains(text(),'Consultar lista de regalos')]"));
-            assertTrue(hostButtonsVisible || guestActionsVisible, "Deberia mostrar acciones disponibles según el rol del usuario");
+            boolean guestActionsVisible = isElementPresent(
+                    By.xpath("//button[contains(text(),'Consultar lista de regalos')]"));
+            assertTrue(hostButtonsVisible || guestActionsVisible,
+                    "Deberia mostrar acciones disponibles según el rol del usuario");
         }
     }
 
     /**
-     * Verifica que al pulsar el boton de modificar evento se navega a la vista de edicion.
+     * Verifies that clicking the edit event button navigates to the edit view.
      */
     @Test
-    @DisplayName("Ticket Event Detail View - Navegar a modificar evento")
+    @DisplayName("Ticket Event Detail View - Navigate to edit event")
     public void testTicketEventDetailView_NavigateToEditEvent() {
         navigateTo("/eventos");
         Select roleSelect = new Select(waitForElement(By.id("role")));
@@ -268,10 +283,11 @@ public class GiftAndTicketViewsSeleniumTest extends BaseSeleniumTest {
     }
 
     /**
-     * Verifica que al pulsar el boton de consultar regalos se navega a la lista de regalos del evento.
+     * Verifies that clicking the view gifts button navigates to the event gift
+     * list.
      */
     @Test
-    @DisplayName("Ticket Event Detail View - Navegar a lista de regalos")
+    @DisplayName("Ticket Event Detail View - Navigate to gift list")
     public void testTicketEventDetailView_NavigateToGifts() {
         navigateTo("/eventos");
         Select roleSelect = new Select(waitForElement(By.id("role")));
@@ -293,10 +309,10 @@ public class GiftAndTicketViewsSeleniumTest extends BaseSeleniumTest {
     }
 
     /**
-     * Verifica que se puede crear un regalo desde el popup rellenando nombre y precio.
+     * Verifies that a gift can be created from the popup by filling name and price.
      */
     @Test
-    @DisplayName("Gift Event List View - Crear regalo desde popup exitosamente")
+    @DisplayName("Gift Event List View - Create gift from popup successfully")
     public void testGiftEventListView_CreateGiftFromPopup() {
         String eventCode = "MADRID";
         navigateTo("/evento/" + eventCode + "/regalos");
@@ -318,17 +334,18 @@ public class GiftAndTicketViewsSeleniumTest extends BaseSeleniumTest {
             waitForUiToSettle();
 
             assertTrue(
-                    !isElementVisible(By.cssSelector(".popup-overlay")) || isErrorMessagePresent() || isElementPresent(By.cssSelector(".error-message-popup")),
-                    "Tras guardar, el popup debería cerrarse o mostrar feedback de error"
-            );
+                    !isElementVisible(By.cssSelector(".popup-overlay")) || isErrorMessagePresent()
+                            || isElementPresent(By.cssSelector(".error-message-popup")),
+                    "Tras guardar, el popup debería cerrarse o mostrar feedback de error");
         }
     }
 
     /**
-     * Verifica que el popup de creacion de regalo no se cierra si falta el campo nombre obligatorio.
+     * Verifies that the gift creation popup stays open if the required name field
+     * is missing.
      */
     @Test
-    @DisplayName("Gift Event List View - Error al crear regalo sin nombre")
+    @DisplayName("Gift Event List View - Error creating gift without name")
     public void testGiftEventListView_CreateGiftValidationError() {
         String eventCode = "MADRID";
         navigateTo("/evento/" + eventCode + "/regalos");
@@ -342,15 +359,16 @@ public class GiftAndTicketViewsSeleniumTest extends BaseSeleniumTest {
             clickElement(By.cssSelector(".save-btn"));
             waitForUiToSettle(Duration.ofMillis(1200));
 
-            assertTrue(isElementPresent(By.cssSelector(".popup-overlay")), "El popup deberia seguir visible si falta el nombre");
+            assertTrue(isElementPresent(By.cssSelector(".popup-overlay")),
+                    "El popup deberia seguir visible si falta el nombre");
         }
     }
 
     /**
-     * Verifica que al cancelar la creacion de un regalo el popup se cierra sin guardar datos.
+     * Verifies that canceling gift creation closes the popup without saving data.
      */
     @Test
-    @DisplayName("Gift Event List View - Cancelar creacion de regalo")
+    @DisplayName("Gift Event List View - Cancel gift creation")
     public void testGiftEventListView_CancelCreateGift() {
         String eventCode = "MADRID";
         navigateTo("/evento/" + eventCode + "/regalos");
@@ -370,24 +388,28 @@ public class GiftAndTicketViewsSeleniumTest extends BaseSeleniumTest {
     }
 
     /**
-     * Verifica que se muestran los detalles de un regalo o un mensaje de error si no existe.
+     * Verifies that gift details are shown or an error message appears if it does
+     * not exist.
      */
     @Test
-    @DisplayName("Gift Detail View - Visualizar detalles del regalo")
+    @DisplayName("Gift Detail View - Display gift details")
     public void testGiftDetailView_DisplayGiftDetails() {
         String eventCode = "MADRID";
         int giftId = 1;
         navigateTo("/evento/" + eventCode + "/regalo/" + giftId);
         waitForUiToSettle(Duration.ofMillis(1200));
 
-        assertTrue(isElementPresent(By.cssSelector(".gift-info-table")) || isElementPresent(By.cssSelector(".error-message")), "Deberia mostrar los detalles del regalo o mensaje de error");
+        assertTrue(
+                isElementPresent(By.cssSelector(".gift-info-table"))
+                        || isElementPresent(By.cssSelector(".error-message")),
+                "Deberia mostrar los detalles del regalo o mensaje de error");
     }
 
     /**
-     * Verifica que se puede editar un regalo existente a traves del popup de modificacion.
+     * Verifies that an existing gift can be edited through the edit popup.
      */
     @Test
-    @DisplayName("Gift Detail View - Editar regalo via popup exitosamente")
+    @DisplayName("Gift Detail View - Edit gift via popup successfully")
     public void testGiftDetailView_EditGiftViaPopup() {
         String eventCode = "MADRID";
         int giftId = 1;
@@ -395,7 +417,8 @@ public class GiftAndTicketViewsSeleniumTest extends BaseSeleniumTest {
         waitForUiToSettle(Duration.ofMillis(1200));
 
         if (isElementPresent(By.xpath("//button[contains(text(),'Modificar regalo')]"))) {
-            org.openqa.selenium.WebElement editBtn = driver.findElement(By.xpath("//button[contains(text(),'Modificar regalo')]"));
+            org.openqa.selenium.WebElement editBtn = driver
+                    .findElement(By.xpath("//button[contains(text(),'Modificar regalo')]"));
             if (editBtn.isEnabled()) {
                 editBtn.click();
                 waitForUiToSettle(Duration.ofMillis(700));
@@ -406,17 +429,18 @@ public class GiftAndTicketViewsSeleniumTest extends BaseSeleniumTest {
                     clickElement(By.cssSelector(".save-btn"));
                     waitForUiToSettle();
 
-                    assertFalse(isElementVisible(By.cssSelector(".popup-overlay")), "El popup deberia cerrarse tras guardar la edicion");
+                    assertFalse(isElementVisible(By.cssSelector(".popup-overlay")),
+                            "El popup deberia cerrarse tras guardar la edicion");
                 }
             }
         }
     }
 
     /**
-     * Verifica que al pulsar el boton de anadir aportacion se abre el popup de contribucion.
+     * Verifies that clicking add contribution opens the contribution popup.
      */
     @Test
-    @DisplayName("Gift Detail View - Abrir popup de contribucion")
+    @DisplayName("Gift Detail View - Open contribution popup")
     public void testGiftDetailView_OpenContributionPopup() {
         String eventCode = "MADRID";
         int giftId = 1;
@@ -433,10 +457,10 @@ public class GiftAndTicketViewsSeleniumTest extends BaseSeleniumTest {
     }
 
     /**
-     * Verifica que se puede realizar una contribucion economica a un regalo desde el popup.
+     * Verifies that a monetary contribution can be made to a gift from the popup.
      */
     @Test
-    @DisplayName("Gift Detail View - Realizar contribucion exitosa")
+    @DisplayName("Gift Detail View - Make contribution successfully")
     public void testGiftDetailView_MakeContribution() {
         String eventCode = "MADRID";
         int giftId = 1;
@@ -452,16 +476,18 @@ public class GiftAndTicketViewsSeleniumTest extends BaseSeleniumTest {
                 clickElement(By.cssSelector(".save-btn"));
                 waitForUiToSettle();
 
-                assertFalse(isElementVisible(By.cssSelector(".popup-overlay")), "El popup deberia cerrarse tras la contribucion");
+                assertFalse(isElementVisible(By.cssSelector(".popup-overlay")),
+                        "El popup deberia cerrarse tras la contribucion");
             }
         }
     }
 
     /**
-     * Verifica que desde el popup de editar asistencia se puede confirmar la invitacion de un invitado.
+     * Verifies that a guest invitation can be confirmed from the edit attendance
+     * popup.
      */
     @Test
-    @DisplayName("Ticket Event List View - EditAttendancePopup confirmar invitacion")
+    @DisplayName("Ticket Event List View - EditAttendancePopup confirm invitation")
     public void testTicketEventListView_EditAttendanceConfirm() {
         String eventCode = "MADRID";
         navigateTo("/evento/" + eventCode + "/invitados");
@@ -476,7 +502,8 @@ public class GiftAndTicketViewsSeleniumTest extends BaseSeleniumTest {
             clickElement(By.cssSelector(".edit-icon-btn"));
             waitForUiToSettle(Duration.ofMillis(700));
 
-            assertTrue(isElementPresent(By.cssSelector(".popup-overlay, .popup")), "Deberia mostrar el popup de editar asistencia");
+            assertTrue(isElementPresent(By.cssSelector(".popup-overlay, .popup")),
+                    "Deberia mostrar el popup de editar asistencia");
 
             if (isElementPresent(By.cssSelector(".edit-button"))) {
                 clickElement(By.cssSelector(".edit-button"));
@@ -494,10 +521,10 @@ public class GiftAndTicketViewsSeleniumTest extends BaseSeleniumTest {
     }
 
     /**
-     * Verifica que desde el popup correspondiente se puede promover a un invitado a anfitrion del evento.
+     * Verifies that a guest can be promoted to host from the corresponding popup.
      */
     @Test
-    @DisplayName("Ticket Event List View - MakeHostPopup promover a anfitrion")
+    @DisplayName("Ticket Event List View - MakeHostPopup promote to host")
     public void testTicketEventListView_MakeHostPopup() {
         String eventCode = "MADRID";
         navigateTo("/evento/" + eventCode + "/invitados");
@@ -512,14 +539,16 @@ public class GiftAndTicketViewsSeleniumTest extends BaseSeleniumTest {
             clickElement(By.cssSelector(".make-host-btn"));
             waitForUiToSettle(Duration.ofMillis(700));
 
-            assertTrue(isElementPresent(By.cssSelector(".popup-overlay, .popup-container")), "Deberia mostrar el popup de confirmacion");
+            assertTrue(isElementPresent(By.cssSelector(".popup-overlay, .popup-container")),
+                    "Deberia mostrar el popup de confirmacion");
 
             if (isElementPresent(By.cssSelector(".btn-confirm"))) {
                 clickElement(By.cssSelector(".btn-confirm"));
                 waitForUiToSettle();
             }
 
-            assertFalse(isElementVisible(By.cssSelector(".popup-container")), "El popup deberia cerrarse tras confirmar");
+            assertFalse(isElementVisible(By.cssSelector(".popup-container")),
+                    "El popup deberia cerrarse tras confirmar");
         }
     }
 }

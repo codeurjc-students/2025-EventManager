@@ -429,6 +429,7 @@
 	</build>
 
 	<profiles>
+		<!-- Perfil por defecto: ejecuta pruebas unitarias para punto de situación rápido. -->
 		<profile>
 			<id>unit</id>
 			<activation>
@@ -448,6 +449,7 @@
 				</plugins>
 			</build>
 		</profile>
+		<!-- Perfil de pruebas E2E: ejecuta únicamente los tests Selenium necesarios. -->
 		<profile>
 			<id>selenium</id>
 			<build>
@@ -464,11 +466,11 @@
 				</plugins>
 			</build>
 		</profile>
+		<!-- Ajustes de CI para Selenium: evita rehacer OpenAPI/frontend cuando no aporta al resultado de estos tests. -->
 		<profile>
 			<id>selenium-ci</id>
 			<properties>
-				<skip.jacoco>true</skip.jacoco>
-				<skip.openapi.generate>true</skip.openapi.generate>
+				<skip.openapi.generate>false</skip.openapi.generate>
 				<skip.frontend.node.install>true</skip.frontend.node.install>
 				<skip.frontend.npm.install>true</skip.frontend.npm.install>
 				<skip.frontend.npm.build>true</skip.frontend.npm.build>

@@ -33,7 +33,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-/** Pruebas unitarias del servicio de tickets, incluyendo consulta de informacion de evento, listado de tickets, inscripcion de usuarios y actualizacion de tickets. */
+/**
+ * Unit tests for the ticket service, including event info retrieval, ticket
+ * listing, user enrollment, and ticket updates.
+ */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("TicketServiceImpl Tests")
 class TicketServiceImplTest {
@@ -113,16 +116,17 @@ class TicketServiceImplTest {
     }
 
     /**
-     * Verifica que se obtiene correctamente la informacion de un evento a partir del ticket.
+     * Verifies that event information is retrieved correctly from a ticket.
      */
     @Test
-    @DisplayName("getEventInformation - Exitoso")
+    @DisplayName("getEventInformation - Success")
     void testGetEventInfo_Success() {
         when(ticketRepository.findById(10)).thenReturn(Optional.of(testTicket));
         when(eventRepository.findByEventCode("ABC123")).thenReturn(Optional.of(testEvent));
         when(ticketMapper.convertTicketToTicketDTO(testTicket)).thenReturn(testTicketDTO);
         when(eventMapper.convertEventToEventDTO(testEvent)).thenReturn(testEventDTO);
-        when(ticketMapper.convertTicketDTOAndEventDTOToEventTicketDTO(testTicketDTO, testEventDTO)).thenReturn(testEventTicketDTO);
+        when(ticketMapper.convertTicketDTOAndEventDTOToEventTicketDTO(testTicketDTO, testEventDTO))
+                .thenReturn(testEventTicketDTO);
 
         EventTicketDTO result = ticketService.getEventInformation("ABC123", 10, 1);
 
@@ -130,55 +134,62 @@ class TicketServiceImplTest {
     }
 
     /**
-     * Verifica que consultar informacion con un ticket inexistente lanza NOT_FOUND.
+     * Verifies that querying information with a non-existent ticket throws
+     * NOT_FOUND.
      */
     @Test
-    @DisplayName("getEventInformation - Ticket no encontrado")
+    @DisplayName("getEventInformation - Ticket not found")
     void testGetEventInfo_TicketNotFound() {
         when(ticketRepository.findById(999)).thenReturn(Optional.empty());
 
-        CustomException ex = assertThrows(CustomException.class, () -> ticketService.getEventInformation("ABC123", 999, 1));
+        CustomException ex = assertThrows(CustomException.class,
+                () -> ticketService.getEventInformation("ABC123", 999, 1));
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatus());
     }
 
     /**
-     * Verifica que un usuario no registrado en el evento no puede consultar su informacion.
+     * Verifies that a user not registered in the event cannot access its
+     * information.
      */
     @Test
-    @DisplayName("getEventInformation - Usuario no registrado en evento")
+    @DisplayName("getEventInformation - User not registered in event")
     void testGetEventInfo_UserNotRegistered() {
         when(ticketRepository.findById(10)).thenReturn(Optional.of(testTicket));
 
-        CustomException ex = assertThrows(CustomException.class, () -> ticketService.getEventInformation("ABC123", 10, 999));
+        CustomException ex = assertThrows(CustomException.class,
+                () -> ticketService.getEventInformation("ABC123", 10, 999));
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
         assertEquals(Constantes.MESSAGE_USER_NOT_REGISTERED_IN_EVENT, ex.getMessage());
     }
 
     /**
-     * Verifica que consultar informacion de un evento inexistente lanza NOT_FOUND.
+     * Verifies that querying information for a non-existent event throws NOT_FOUND.
      */
     @Test
-    @DisplayName("getEventInformation - Evento no encontrado")
+    @DisplayName("getEventInformation - Event not found")
     void testGetEventInfo_EventNotFound() {
         when(ticketRepository.findById(10)).thenReturn(Optional.of(testTicket));
         when(eventRepository.findByEventCode("NOTFND")).thenReturn(Optional.empty());
 
-        CustomException ex = assertThrows(CustomException.class, () -> ticketService.getEventInformation("NOTFND", 10, 1));
+        CustomException ex = assertThrows(CustomException.class,
+                () -> ticketService.getEventInformation("NOTFND", 10, 1));
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatus());
     }
 
     /**
-     * Verifica que el listado de tickets de un evento se obtiene correctamente con paginacion.
+     * Verifies that ticket listing for an event is retrieved correctly with
+     * pagination.
      */
     @Test
-    @DisplayName("getEventTickets - Exitoso")
+    @DisplayName("getEventTickets - Success")
     void testGetEventTickets_Success() {
         when(eventRepository.findByEventCode("ABC123")).thenReturn(Optional.of(testEvent));
         doNothing().when(accessControlUtils).validateUserIsHost(1);
 
         Page<Ticket> ticketPage = new PageImpl<>(List.of(testTicket));
         Specification<Ticket> specification = (root, query, builder) -> builder.conjunction();
-        when(ticketRepository.findAll(org.mockito.ArgumentMatchers.<Specification<Ticket>>any(), any(Pageable.class))).thenReturn(ticketPage);
+        when(ticketRepository.findAll(org.mockito.ArgumentMatchers.<Specification<Ticket>>any(), any(Pageable.class)))
+                .thenReturn(ticketPage);
         when(ticketSpecificationBuilder.build(anyList())).thenReturn(specification);
         when(ticketMapper.convertTicketToTicketDTO(testTicket)).thenReturn(testTicketDTO);
 
@@ -189,35 +200,39 @@ class TicketServiceImplTest {
     }
 
     /**
-     * Verifica que listar tickets de un evento inexistente lanza NOT_FOUND.
+     * Verifies that listing tickets for a non-existent event throws NOT_FOUND.
      */
     @Test
-    @DisplayName("getEventTickets - Evento no encontrado")
+    @DisplayName("getEventTickets - Event not found")
     void testGetEventTickets_EventNotFound() {
         when(eventRepository.findByEventCode("NOTFND")).thenReturn(Optional.empty());
 
-        CustomException ex = assertThrows(CustomException.class, () -> ticketService.getEventTickets("NOTFND", 1, 10, "ticketId", "ASC", null));
+        CustomException ex = assertThrows(CustomException.class,
+                () -> ticketService.getEventTickets("NOTFND", 1, 10, "ticketId", "ASC", null));
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatus());
     }
 
     /**
-     * Verifica que un usuario sin rol HOST no puede listar los tickets del evento.
+     * Verifies that a user without the HOST role cannot list tickets for the event.
      */
     @Test
-    @DisplayName("getEventTickets - No es HOST")
+    @DisplayName("getEventTickets - Not HOST")
     void testGetEventTickets_NotHost() {
         when(eventRepository.findByEventCode("ABC123")).thenReturn(Optional.of(testEvent));
-        doThrow(new CustomException(HttpStatus.FORBIDDEN, Constantes.MESSAGE_USER_NOT_HOST)).when(accessControlUtils).validateUserIsHost(1);
+        doThrow(new CustomException(HttpStatus.FORBIDDEN, Constantes.MESSAGE_USER_NOT_HOST)).when(accessControlUtils)
+                .validateUserIsHost(1);
 
-        CustomException ex = assertThrows(CustomException.class, () -> ticketService.getEventTickets("ABC123", 1, 10, "ticketId", "ASC", null));
+        CustomException ex = assertThrows(CustomException.class,
+                () -> ticketService.getEventTickets("ABC123", 1, 10, "ticketId", "ASC", null));
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
     }
 
     /**
-     * Verifica que la inscripcion de un usuario como GUEST se realiza sin confirmaciones automaticas.
+     * Verifies that enrolling a user as GUEST happens without automatic
+     * confirmations.
      */
     @Test
-    @DisplayName("enrollUserInEvent - Inscripcion exitosa como GUEST")
+    @DisplayName("enrollUserInEvent - Successful enrollment as GUEST")
     void testEnroll_SuccessAsGuest() {
         EnrollUserDTO enrollDTO = EnrollUserDTO.builder()
                 .eventCode("ABC123")
@@ -236,14 +251,15 @@ class TicketServiceImplTest {
         TicketDTO result = ticketService.enrollUserInEvent(enrollDTO);
 
         assertNotNull(result);
-        verify(ticketRepository).save(argThat(t -> t.getInvitationConfirmation() == null && t.getAssistConfirmation() == null));
+        verify(ticketRepository)
+                .save(argThat(t -> t.getInvitationConfirmation() == null && t.getAssistConfirmation() == null));
     }
 
     /**
-     * Verifica que la inscripcion como HOST auto-confirma tanto la invitacion como la asistencia.
+     * Verifies that enrolling as HOST auto-confirms both invitation and attendance.
      */
     @Test
-    @DisplayName("enrollUserInEvent - Inscripcion como HOST auto-confirma")
+    @DisplayName("enrollUserInEvent - Enrollment as HOST auto-confirms")
     void testEnroll_SuccessAsHost() {
         EnrollUserDTO enrollDTO = EnrollUserDTO.builder()
                 .eventCode("ABC123")
@@ -261,14 +277,15 @@ class TicketServiceImplTest {
 
         ticketService.enrollUserInEvent(enrollDTO);
 
-        verify(ticketRepository).save(argThat(t -> Boolean.TRUE.equals(t.getInvitationConfirmation()) && Boolean.TRUE.equals(t.getAssistConfirmation())));
+        verify(ticketRepository).save(argThat(t -> Boolean.TRUE.equals(t.getInvitationConfirmation())
+                && Boolean.TRUE.equals(t.getAssistConfirmation())));
     }
 
     /**
-     * Verifica que inscribirse en un evento inexistente lanza NOT_FOUND.
+     * Verifies that enrolling in a non-existent event throws NOT_FOUND.
      */
     @Test
-    @DisplayName("enrollUserInEvent - Evento no encontrado")
+    @DisplayName("enrollUserInEvent - Event not found")
     void testEnroll_EventNotFound() {
         EnrollUserDTO enrollDTO = EnrollUserDTO.builder().eventCode("NOTFND").userId(1).role("GUEST").build();
         when(eventRepository.findByEventCode("NOTFND")).thenReturn(Optional.empty());
@@ -278,10 +295,10 @@ class TicketServiceImplTest {
     }
 
     /**
-     * Verifica que un usuario ya registrado en el evento no puede inscribirse de nuevo.
+     * Verifies that a user already registered in the event cannot enroll again.
      */
     @Test
-    @DisplayName("enrollUserInEvent - Ya registrado")
+    @DisplayName("enrollUserInEvent - Already registered")
     void testEnroll_AlreadyRegistered() {
         EnrollUserDTO enrollDTO = EnrollUserDTO.builder().eventCode("ABC123").userId(1).role("GUEST").build();
         when(eventRepository.findByEventCode("ABC123")).thenReturn(Optional.of(testEvent));
@@ -294,10 +311,10 @@ class TicketServiceImplTest {
     }
 
     /**
-     * Verifica que si no se indica el numero de invitados se establece por defecto a 1.
+     * Verifies that if the guest number is not specified, it defaults to 1.
      */
     @Test
-    @DisplayName("enrollUserInEvent - guestNumber nulo se establece a 1")
+    @DisplayName("enrollUserInEvent - Null guestNumber defaults to 1")
     void testEnroll_NullGuestNumber() {
         EnrollUserDTO enrollDTO = EnrollUserDTO.builder()
                 .eventCode("ABC123").userId(1).role("GUEST").guestNumber(null).build();
@@ -314,10 +331,10 @@ class TicketServiceImplTest {
     }
 
     /**
-     * Verifica que la actualizacion de un ticket existente se realiza correctamente.
+     * Verifies that updating an existing ticket completes correctly.
      */
     @Test
-    @DisplayName("updateTicket - Actualizacion exitosa")
+    @DisplayName("updateTicket - Successful update")
     void testUpdateTicket_Success() {
         UpdateTicketDTO updateDTO = new UpdateTicketDTO();
         updateDTO.setNotes("Updated notes");
@@ -328,7 +345,8 @@ class TicketServiceImplTest {
         when(eventRepository.findByEventCode("ABC123")).thenReturn(Optional.of(testEvent));
         when(eventMapper.convertEventToEventDTO(testEvent)).thenReturn(testEventDTO);
         when(ticketMapper.convertTicketToTicketDTO(testTicket)).thenReturn(testTicketDTO);
-        when(ticketMapper.convertTicketDTOAndEventDTOToEventTicketDTO(testTicketDTO, testEventDTO)).thenReturn(testEventTicketDTO);
+        when(ticketMapper.convertTicketDTOAndEventDTOToEventTicketDTO(testTicketDTO, testEventDTO))
+                .thenReturn(testEventTicketDTO);
 
         EventTicketDTO result = ticketService.updateTicket("ABC123", 10, updateDTO);
 
@@ -337,35 +355,39 @@ class TicketServiceImplTest {
     }
 
     /**
-     * Verifica que un usuario sin autorizacion no puede actualizar un ticket.
+     * Verifies that a user without authorization cannot update a ticket.
      */
     @Test
-    @DisplayName("updateTicket - No autorizado")
+    @DisplayName("updateTicket - Not authorized")
     void testUpdateTicket_NotAuthorized() {
-        doThrow(new CustomException(HttpStatus.FORBIDDEN, Constantes.MESSAGE_FORBIDDEN_ACCESS)).when(accessControlUtils).validateTicketAccess(10);
+        doThrow(new CustomException(HttpStatus.FORBIDDEN, Constantes.MESSAGE_FORBIDDEN_ACCESS)).when(accessControlUtils)
+                .validateTicketAccess(10);
 
-        CustomException ex = assertThrows(CustomException.class, () -> ticketService.updateTicket("ABC123", 10, new UpdateTicketDTO()));
+        CustomException ex = assertThrows(CustomException.class,
+                () -> ticketService.updateTicket("ABC123", 10, new UpdateTicketDTO()));
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
     }
 
     /**
-     * Verifica que intentar actualizar un ticket inexistente lanza NOT_FOUND.
+     * Verifies that attempting to update a non-existent ticket throws NOT_FOUND.
      */
     @Test
-    @DisplayName("updateTicket - Ticket no encontrado")
+    @DisplayName("updateTicket - Ticket not found")
     void testUpdateTicket_TicketNotFound() {
         doNothing().when(accessControlUtils).validateTicketAccess(999);
         when(ticketRepository.findById(999)).thenReturn(Optional.empty());
 
-        CustomException ex = assertThrows(CustomException.class, () -> ticketService.updateTicket("ABC123", 999, new UpdateTicketDTO()));
+        CustomException ex = assertThrows(CustomException.class,
+                () -> ticketService.updateTicket("ABC123", 999, new UpdateTicketDTO()));
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatus());
     }
 
     /**
-     * Verifica que la actualizacion parcial solo modifica los campos proporcionados, sin alterar los demas.
+     * Verifies that partial updates only modify provided fields without changing
+     * others.
      */
     @Test
-    @DisplayName("updateTicket - Actualizacion parcial (solo campos no null)")
+    @DisplayName("updateTicket - Partial update (only non-null fields)")
     void testUpdateTicket_PartialUpdate() {
         UpdateTicketDTO updateDTO = new UpdateTicketDTO();
         updateDTO.setGuestNumber(5);
@@ -376,7 +398,8 @@ class TicketServiceImplTest {
         when(eventRepository.findByEventCode("ABC123")).thenReturn(Optional.of(testEvent));
         when(eventMapper.convertEventToEventDTO(testEvent)).thenReturn(testEventDTO);
         when(ticketMapper.convertTicketToTicketDTO(testTicket)).thenReturn(testTicketDTO);
-        when(ticketMapper.convertTicketDTOAndEventDTOToEventTicketDTO(testTicketDTO, testEventDTO)).thenReturn(testEventTicketDTO);
+        when(ticketMapper.convertTicketDTOAndEventDTOToEventTicketDTO(testTicketDTO, testEventDTO))
+                .thenReturn(testEventTicketDTO);
 
         ticketService.updateTicket("ABC123", 10, updateDTO);
 
@@ -386,10 +409,11 @@ class TicketServiceImplTest {
     }
 
     /**
-     * Verifica que se obtiene correctamente el mapa de eventId a ticketId para un usuario y rol dados.
+     * Verifies that the eventId-to-ticketId map is retrieved correctly for a given
+     * user and role.
      */
     @Test
-    @DisplayName("getTicketsByUserAndRole - Retorna mapa eventId->ticketId")
+    @DisplayName("getTicketsByUserAndRole - Returns eventId->ticketId map")
     void testGetTicketsByUserAndRole_Success() {
         when(userService.getUser(1)).thenReturn(testUser);
         when(ticketRepository.findByUserId_UserIdAndRole(1, "HOST")).thenReturn(List.of(testTicket));
@@ -402,10 +426,11 @@ class TicketServiceImplTest {
     }
 
     /**
-     * Verifica que si no existen tickets para el usuario y rol se devuelve un mapa vacio.
+     * Verifies that when no tickets exist for the user and role, an empty map is
+     * returned.
      */
     @Test
-    @DisplayName("getTicketsByUserAndRole - Sin tickets, retorna mapa vacio")
+    @DisplayName("getTicketsByUserAndRole - No tickets, returns empty map")
     void testGetTicketsByUserAndRole_NoTickets() {
         when(userService.getUser(1)).thenReturn(testUser);
         when(ticketRepository.findByUserId_UserIdAndRole(1, "HOST")).thenReturn(Collections.emptyList());
@@ -417,10 +442,10 @@ class TicketServiceImplTest {
     }
 
     /**
-     * Verifica que se obtiene correctamente el ticket de un usuario en un evento especifico.
+     * Verifies that a user's ticket for a specific event is retrieved correctly.
      */
     @Test
-    @DisplayName("getTicketByEventAndUser - Exitoso")
+    @DisplayName("getTicketByEventAndUser - Success")
     void testGetTicketByEventAndUser_Success() {
         when(userService.getUser(1)).thenReturn(testUser);
         when(ticketRepository.findByEventId_EventIdAndUserId_UserId(1, 1)).thenReturn(Optional.of(testTicket));
@@ -432,10 +457,11 @@ class TicketServiceImplTest {
     }
 
     /**
-     * Verifica que buscar un ticket inexistente para un evento y usuario lanza NOT_FOUND.
+     * Verifies that looking up a non-existent ticket for an event and user throws
+     * NOT_FOUND.
      */
     @Test
-    @DisplayName("getTicketByEventAndUser - No encontrado")
+    @DisplayName("getTicketByEventAndUser - Not found")
     void testGetTicketByEventAndUser_NotFound() {
         when(userService.getUser(1)).thenReturn(testUser);
         when(ticketRepository.findByEventId_EventIdAndUserId_UserId(99, 1)).thenReturn(Optional.empty());

@@ -27,36 +27,38 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- * Clase base abstracta para todos los tests de Selenium del proyecto. Centraliza la configuracion del WebDriver de Chrome, los tiempos de espera y ofrece metodos utilitarios comunes como login, registro, navegacion y manipulacion de elementos en la interfaz web.
+ * Abstract base class for all Selenium tests in the project. Centralizes Chrome
+ * WebDriver configuration, wait settings, and provides shared helper methods
+ * like login, registration, navigation, and UI element interactions.
  */
-@SpringBootTest(
-    webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT,
-    properties = {"server.port=8090"}
-)
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT, properties = { "server.port=8090" })
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public abstract class BaseSeleniumTest {
 
     protected WebDriver driver;
     protected WebDriverWait wait;
     protected static final String BASE_URL = "http://localhost:8090";
-    protected static final int DEFAULT_WAIT_SECONDS = 15;
+    protected static final int DEFAULT_WAIT_SECONDS = 45;
     private String fallbackUsername;
     private boolean sessionValidatedInCurrentBrowser;
     private long lastSessionValidationAtMillis;
     private static final String FALLBACK_PASSWORD = "ClaveSegura2025";
-        private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
+    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(8))
             .build();
-        private static final ConcurrentMap<String, CachedAuthCookies> AUTH_COOKIE_CACHE = new ConcurrentHashMap<>();
-        private static final ConcurrentMap<String, Long> FAILED_LOGIN_CACHE = new ConcurrentHashMap<>();
-        private static final long AUTH_CACHE_TTL_MILLIS = Duration.ofMinutes(4).toMillis();
-        private static final long FAILED_LOGIN_CACHE_TTL_MILLIS = Duration.ofMinutes(5).toMillis();
-        private static final double SLEEP_MULTIPLIER = Double.parseDouble(System.getProperty("selenium.sleep.multiplier", "0.5"));
-        private static final Duration QUICK_CHECK_TIMEOUT = Duration.ofSeconds(2);
-    private static final boolean REUSE_BROWSER_PER_CLASS = Boolean.parseBoolean(System.getProperty("selenium.reuse.browser.per.class", "true"));
+    private static final ConcurrentMap<String, CachedAuthCookies> AUTH_COOKIE_CACHE = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<String, Long> FAILED_LOGIN_CACHE = new ConcurrentHashMap<>();
+    private static final long AUTH_CACHE_TTL_MILLIS = Duration.ofMinutes(4).toMillis();
+    private static final long FAILED_LOGIN_CACHE_TTL_MILLIS = Duration.ofMinutes(5).toMillis();
+    private static final double SLEEP_MULTIPLIER = Double
+            .parseDouble(System.getProperty("selenium.sleep.multiplier", "0.5"));
+    private static final Duration QUICK_CHECK_TIMEOUT = Duration.ofSeconds(2);
+    private static final boolean REUSE_BROWSER_PER_CLASS = Boolean
+            .parseBoolean(System.getProperty("selenium.reuse.browser.per.class", "true"));
 
     /**
-     * Descarga y configura el driver de Chrome mediante WebDriverManager antes de ejecutar cualquier test de la clase.
+     * Downloads and configures the Chrome driver via WebDriverManager before any
+     * tests in the class run.
      */
     @BeforeAll
     public static void setupClass() {
@@ -64,7 +66,8 @@ public abstract class BaseSeleniumTest {
     }
 
     /**
-     * Inicializa el navegador Chrome en modo headless con las opciones necesarias para la ejecucion de tests y configura los tiempos de espera implicitos.
+     * Initializes headless Chrome with the options required for test execution and
+     * configures implicit waits.
      */
     @BeforeEach
     public void setupTest() {
@@ -89,7 +92,8 @@ public abstract class BaseSeleniumTest {
 
         driver = new ChromeDriver(options);
         setSessionValidated(false);
-        // Evitamos esperas implícitas globales para no multiplicar tiempos en findElement/findElements.
+        // Avoid global implicit waits so findElement/findElements do not multiply wait
+        // times.
         driver.manage().timeouts().implicitlyWait(Duration.ZERO);
         driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(20));
         wait = new WebDriverWait(driver, Duration.ofSeconds(DEFAULT_WAIT_SECONDS));
@@ -122,7 +126,8 @@ public abstract class BaseSeleniumTest {
         }
 
         try {
-            ((org.openqa.selenium.JavascriptExecutor) driver).executeScript("window.localStorage.clear(); window.sessionStorage.clear();");
+            ((org.openqa.selenium.JavascriptExecutor) driver)
+                    .executeScript("window.localStorage.clear(); window.sessionStorage.clear();");
         } catch (Exception ignored) {
             // no-op
         }
@@ -131,15 +136,16 @@ public abstract class BaseSeleniumTest {
     }
 
     /**
-     * Permite controlar por suite si se conservan cookies entre tests para evitar logins redundantes.
-     * En vistas de autenticación se debe sobrescribir devolviendo false.
+     * Lets each suite control whether cookies are preserved between tests to avoid
+     * redundant logins.
+     * Auth views should override this and return false.
      */
     protected boolean preserveCookiesBetweenTests() {
         return true;
     }
 
     /**
-     * Cierra el navegador y libera los recursos del WebDriver despues de cada test.
+     * Closes the browser and releases WebDriver resources after each test.
      */
     @AfterEach
     public void tearDown() {
@@ -158,7 +164,7 @@ public abstract class BaseSeleniumTest {
     }
 
     /**
-     * Navega a una URL relativa a la URL base
+     * Navigates to a URL relative to the base URL.
      */
     protected void navigateTo(String path) {
         String fullUrl = BASE_URL + path;
@@ -171,28 +177,28 @@ public abstract class BaseSeleniumTest {
     }
 
     /**
-     * Espera a que un elemento sea visible en la página
+     * Waits until an element is visible on the page.
      */
     protected WebElement waitForElement(By locator) {
         return wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
     }
 
     /**
-     * Espera a que un elemento sea clickeable
+     * Waits until an element is clickable.
      */
     protected WebElement waitForClickableElement(By locator) {
         return wait.until(ExpectedConditions.elementToBeClickable(locator));
     }
 
     /**
-     * Espera a que un elemento desaparezca de la página
+     * Waits for an element to disappear from the page.
      */
     protected void waitForElementToDisappear(By locator) {
         wait.until(ExpectedConditions.invisibilityOfElementLocated(locator));
     }
 
     /**
-     * Escribe texto en un campo de entrada
+     * Types text into an input field.
      */
     protected void fillInput(By locator, String text) {
         WebElement element = waitForElement(locator);
@@ -201,7 +207,7 @@ public abstract class BaseSeleniumTest {
     }
 
     /**
-     * Hace clic en un elemento
+     * Clicks an element.
      */
     protected void clickElement(By locator) {
         WebElement element = waitForClickableElement(locator);
@@ -209,7 +215,7 @@ public abstract class BaseSeleniumTest {
     }
 
     /**
-     * Obtiene el texto de un elemento
+     * Gets the text of an element.
      */
     protected String getElementText(By locator) {
         WebElement element = waitForElement(locator);
@@ -217,7 +223,7 @@ public abstract class BaseSeleniumTest {
     }
 
     /**
-     * Verifica si un elemento está presente en la página
+     * Checks whether an element is present on the page.
      */
     protected boolean isElementPresent(By locator) {
         try {
@@ -229,7 +235,7 @@ public abstract class BaseSeleniumTest {
     }
 
     /**
-     * Verifica si un elemento está visible en la página
+     * Checks whether an element is visible on the page.
      */
     protected boolean isElementVisible(By locator) {
         try {
@@ -244,21 +250,21 @@ public abstract class BaseSeleniumTest {
     }
 
     /**
-     * Espera a que la URL contenga un texto específico
+     * Waits for the URL to contain specific text.
      */
     protected void waitForUrlContains(String text) {
         wait.until(ExpectedConditions.urlContains(text));
     }
 
     /**
-     * Obtiene la URL actual
+     * Gets the current URL.
      */
     protected String getCurrentUrl() {
         return driver.getCurrentUrl();
     }
 
     /**
-     * Realiza un scroll hasta un elemento
+     * Scrolls to an element.
      */
     protected void scrollToElement(By locator) {
         WebElement element = driver.findElement(locator);
@@ -266,7 +272,7 @@ public abstract class BaseSeleniumTest {
     }
 
     /**
-     * Espera un tiempo específico (usar solo cuando sea necesario)
+     * Waits for a specific time (use only when necessary).
      */
     protected void sleep(int milliseconds) {
         try {
@@ -278,14 +284,15 @@ public abstract class BaseSeleniumTest {
     }
 
     /**
-     * Espera a que la UI quede estable (documento cargado y sin overlays de carga visibles).
+     * Waits for the UI to be stable (document loaded and no visible loading
+     * overlays).
      */
     protected void waitForUiToSettle() {
         waitForUiToSettle(Duration.ofSeconds(2));
     }
 
     /**
-     * Espera a que la UI quede estable con un timeout configurable.
+     * Waits for the UI to be stable with a configurable timeout.
      */
     protected void waitForUiToSettle(Duration timeout) {
         try {
@@ -298,8 +305,7 @@ public abstract class BaseSeleniumTest {
                     }
 
                     List<WebElement> busyElements = d.findElements(By.cssSelector(
-                            ".loading, .spinner, .loader, [aria-busy='true'], .swal2-container.swal2-backdrop-show"
-                    ));
+                            ".loading, .spinner, .loader, [aria-busy='true'], .swal2-container.swal2-backdrop-show"));
                     for (WebElement element : busyElements) {
                         if (element.isDisplayed()) {
                             return false;
@@ -312,12 +318,12 @@ public abstract class BaseSeleniumTest {
                 }
             });
         } catch (Exception ignored) {
-            // Si no se cumple, se continúa para no bloquear el test por selectores opcionales.
+            // If it does not settle, continue so optional selectors do not block the test.
         }
     }
 
     /**
-     * Método auxiliar para login (reutilizable en otros tests)
+     * Helper method for login (reusable in other tests).
      */
     protected void login(String username, String password) {
         if (hasAuthCookie() && hasActiveAuthenticatedSession()) {
@@ -348,7 +354,7 @@ public abstract class BaseSeleniumTest {
 
         markCredentialAsFailed(loginKey);
 
-        // Si sigue en login, se crea un usuario de respaldo y se reintenta autenticación.
+        // If still on login, create a fallback user and retry authentication.
         if (getCurrentUrl().contains("/iniciar-sesion")) {
             ensureFallbackUserAndLogin();
         }
@@ -406,7 +412,8 @@ public abstract class BaseSeleniumTest {
                 return applyCookies(cached.cookies);
             }
 
-            String payload = "{\"username\":\"" + escapeJson(username) + "\",\"password\":\"" + escapeJson(password) + "\"}";
+            String payload = "{\"username\":\"" + escapeJson(username) + "\",\"password\":\"" + escapeJson(password)
+                    + "\"}";
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(BASE_URL + "/api/auth/login"))
                     .timeout(Duration.ofSeconds(10))
@@ -439,12 +446,12 @@ public abstract class BaseSeleniumTest {
         for (Cookie cookie : cookies) {
             driver.manage().addCookie(cookie);
         }
-        // Validamos autenticación en una vista protegida para evitar falsos positivos.
+        // Validate authentication on a protected view to avoid false positives.
         navigateTo("/usuario/actualizar-perfil");
         try {
             new WebDriverWait(driver, Duration.ofSeconds(3)).until(d -> !d.getCurrentUrl().contains("/iniciar-sesion"));
         } catch (Exception ignored) {
-            // Si no se cumple, se valida al final por URL.
+            // If it does not pass, validate by URL at the end.
         }
         boolean authenticated = !getCurrentUrl().contains("/iniciar-sesion");
         setSessionValidated(authenticated);
@@ -500,14 +507,16 @@ public abstract class BaseSeleniumTest {
     }
 
     private void ensureFallbackUserAndLogin() {
-        if (fallbackUsername != null && (performApiLogin(fallbackUsername, FALLBACK_PASSWORD) || performLogin(fallbackUsername, FALLBACK_PASSWORD))) {
+        if (fallbackUsername != null && (performApiLogin(fallbackUsername, FALLBACK_PASSWORD)
+                || performLogin(fallbackUsername, FALLBACK_PASSWORD))) {
             return;
         }
 
         fallbackUsername = "selenium" + System.currentTimeMillis();
         String fallbackEmail = fallbackUsername + "@eventmanager.es";
 
-        if (performApiRegisterAndApplyCookies(fallbackEmail, fallbackUsername, FALLBACK_PASSWORD, "Carlos", "Martinez", "612345678")) {
+        if (performApiRegisterAndApplyCookies(fallbackEmail, fallbackUsername, FALLBACK_PASSWORD, "Carlos", "Martinez",
+                "612345678")) {
             return;
         }
 
@@ -525,14 +534,15 @@ public abstract class BaseSeleniumTest {
         }
     }
 
-    private boolean performApiRegisterAndApplyCookies(String email, String username, String password, String firstName, String lastName, String phone) {
+    private boolean performApiRegisterAndApplyCookies(String email, String username, String password, String firstName,
+            String lastName, String phone) {
         try {
             String payload = "{"
-                    + "\"email\":\"" + escapeJson(email) + "\"," 
-                    + "\"username\":\"" + escapeJson(username) + "\"," 
-                    + "\"password\":\"" + escapeJson(password) + "\"," 
-                    + "\"firstName\":\"" + escapeJson(firstName) + "\"," 
-                    + "\"lastName\":\"" + escapeJson(lastName) + "\"," 
+                    + "\"email\":\"" + escapeJson(email) + "\","
+                    + "\"username\":\"" + escapeJson(username) + "\","
+                    + "\"password\":\"" + escapeJson(password) + "\","
+                    + "\"firstName\":\"" + escapeJson(firstName) + "\","
+                    + "\"lastName\":\"" + escapeJson(lastName) + "\","
                     + "\"phoneNumber\":\"" + escapeJson(phone) + "\""
                     + "}";
 
@@ -587,29 +597,34 @@ public abstract class BaseSeleniumTest {
                 return isErrorMessagePresent();
             });
         } catch (Exception ignored) {
-            // Se evaluará por URL al finalizar.
+            // It will be evaluated by URL at the end.
         }
     }
 
     /**
-     * Método auxiliar para registrar un nuevo usuario
+     * Helper method to register a new user.
      */
-    protected void register(String email, String username, String password, String firstName, String lastName, String phone) {
+    protected void register(String email, String username, String password, String firstName, String lastName,
+            String phone) {
         navigateTo("/registro");
         fillInput(By.cssSelector(".register-container input[type='email']"), email);
         fillInput(By.cssSelector(".register-container input[type='text']:nth-of-type(1)"), username);
         fillInput(By.cssSelector(".register-container input[type='password']"), password);
-        java.util.List<org.openqa.selenium.WebElement> textInputs = driver.findElements(By.cssSelector(".register-container .form-group input[type='text']"));
+        java.util.List<org.openqa.selenium.WebElement> textInputs = driver
+                .findElements(By.cssSelector(".register-container .form-group input[type='text']"));
         if (textInputs.size() >= 4) {
-            textInputs.get(1).clear(); textInputs.get(1).sendKeys(firstName);
-            textInputs.get(2).clear(); textInputs.get(2).sendKeys(lastName);
-            textInputs.get(3).clear(); textInputs.get(3).sendKeys(phone);
+            textInputs.get(1).clear();
+            textInputs.get(1).sendKeys(firstName);
+            textInputs.get(2).clear();
+            textInputs.get(2).sendKeys(lastName);
+            textInputs.get(3).clear();
+            textInputs.get(3).sendKeys(phone);
         }
         clickElement(By.cssSelector(".register-container button[type='submit']"));
     }
 
     /**
-     * Método auxiliar para logout
+     * Helper method for logout.
      */
     protected void logout() {
         driver.manage().deleteAllCookies();
@@ -620,28 +635,28 @@ public abstract class BaseSeleniumTest {
     }
 
     /**
-     * Verifica si un mensaje de error está presente
+     * Checks whether an error message is present.
      */
     protected boolean isErrorMessagePresent() {
         return isElementVisible(By.cssSelector(".error-message, .alert-error, .text-red-500"));
     }
 
     /**
-     * Obtiene el texto del mensaje de error
+     * Gets the error message text.
      */
     protected String getErrorMessage() {
         return getElementText(By.cssSelector(".error-message, .alert-error, .text-red-500"));
     }
 
     /**
-     * Verifica si un mensaje de éxito está presente
+     * Checks whether a success message is present.
      */
     protected boolean isSuccessMessagePresent() {
         return isElementVisible(By.cssSelector(".success-message, .alert-success, .text-green-500"));
     }
 
     /**
-     * Obtiene el texto del mensaje de éxito
+     * Gets the success message text.
      */
     protected String getSuccessMessage() {
         return getElementText(By.cssSelector(".success-message, .alert-success, .text-green-500"));

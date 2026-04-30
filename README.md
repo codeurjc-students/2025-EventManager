@@ -55,7 +55,9 @@ eventManager/
 ├─ pom.xml
 ├─ mvnw
 ├─ mvnw.cmd
-├─ docker-compose.yaml
+├─ docker-compose-base.local.yaml
+├─ docker-compose-detailed.local.yaml
+├─ docker-compose.aws.yaml
 ├─ .env.example
 ├─ .gitignore
 ├─ src/
@@ -87,9 +89,10 @@ eventManager/
 │     ├─ views/
 │     └─ main.ts
 ├─ minio_data/
-└─ .github/
-	└─ workflows/
-		└─ ci.yml
+├─ .github/
+│  └─ workflows/
+      ├─ cd.yml
+│     └─ ci.yml
 ```
 
 ---
@@ -122,7 +125,7 @@ El proyecto utiliza **MinIO** (compatible con S3) para desarrollo local.
 ### Iniciar MinIO
 
 ```bash
-docker-compose up -d
+docker compose -f docker-compose-base.local.yaml up -d
 ```
 
 ### Acceso:
@@ -134,6 +137,22 @@ docker-compose up -d
 - Contraseña: `${MINIO_SECRET_KEY}` (ver `.env.example`)
 
 El bucket `event-manager-images` se crea automáticamente al iniciar la aplicación con perfil `dev`.
+
+### Stack local completo
+
+Si quieres levantar la aplicación completa en local junto con PostgreSQL y MinIO:
+
+```bash
+docker compose -f docker-compose-detailed.local.yaml up -d --build
+```
+
+Este stack arranca:
+- **App**: `http://localhost:8090`
+- **PostgreSQL**: `localhost:5432`
+- **MinIO API**: `http://localhost:9000`
+- **MinIO Console**: `http://localhost:9001`
+
+La imagen de la app se construye con el `Dockerfile` de la raíz, que ya integra el frontend compilado dentro del backend Spring Boot.
 
 ### Arquitectura
 

@@ -134,6 +134,7 @@ jobs:
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
       MINIO_BUCKET_NAME: event-manager-images
+      SPRING_JPA_HIBERNATE_DDL_AUTO: create-drop
 
     steps:
       - name: Checkout
@@ -194,7 +195,7 @@ jobs:
           if-no-files-found: error
 
       - name: Upload backend startup log
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: backend-log

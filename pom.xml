@@ -469,16 +469,5 @@
 				</plugins>
 			</build>
 		</profile>
-		<!-- Ajustes de CI para Selenium: evita rehacer OpenAPI/frontend cuando no aporta al resultado de estos tests. -->
-		<profile>
-			<id>selenium-ci</id>
-			<properties>
-				<skip.openapi.generate>false</skip.openapi.generate>
-				<skip.frontend.node.install>true</skip.frontend.node.install>
-				<skip.frontend.npm.install>true</skip.frontend.npm.install>
-				<skip.frontend.npm.build>true</skip.frontend.npm.build>
-				<skip.frontend.copy.resources>true</skip.frontend.copy.resources>
-			</properties>
-		</profile>
 	</profiles>
 </project>

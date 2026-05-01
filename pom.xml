@@ -42,6 +42,9 @@
 		<skip.frontend.npm.build>false</skip.frontend.npm.build>
 		<skip.frontend.copy.resources>false</skip.frontend.copy.resources>
 		<selenium.includes>**/selenium/**/*Test.java</selenium.includes>
+		<jacoco.destFile>${project.build.directory}/jacoco.exec</jacoco.destFile>
+		<jacoco.dataFile>${project.build.directory}/jacoco.exec</jacoco.dataFile>
+		<jacoco.outputDirectory>${project.build.directory}/site/jacoco</jacoco.outputDirectory>
 	</properties>
 
 	<dependencies>
@@ -248,6 +251,9 @@
 				<version>${jacoco.version}</version>
 				<configuration>
 					<skip>${skip.jacoco}</skip>
+					<destFile>${jacoco.destFile}</destFile>
+					<dataFile>${jacoco.dataFile}</dataFile>
+					<outputDirectory>${jacoco.outputDirectory}</outputDirectory>
 				</configuration>
 				<executions>
 					<execution>

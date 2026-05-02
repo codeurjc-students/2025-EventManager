@@ -13,10 +13,10 @@ Parameters:
     Description: Key pair RSA (según TXT)
     Type: AWS::EC2::KeyPair::KeyName
     Default: EventManagerApplication
-  AmiSsmParameter:
-    Description: AMI AL2023 (según TXT)
+  AmiId:
+    Description: AMI ID para AL2023 (ej. ami-09fc5668766215f32)
     Type: String
-    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-2023.11.20260406.2-kernel-6.1-x86_64
+    Default: ami-09fc5668766215f32
   DbInstanceIdentifier:
     Type: String
     Default: eventmanager-application-db
@@ -25,7 +25,7 @@ Parameters:
     Default: db.t3.micro
   DbName:
     Type: String
-    Default: EventManagerDatabase
+    Default: eventmanagerdatabase
   DbUsername:
     Type: String
     Default: admin
@@ -264,7 +264,7 @@ Resources:
       - EventsPublicSubnetRouteTableAssociation
     Properties:
       KeyName: !Ref KeyName
-      ImageId: !Sub "{{resolve:ssm:${AmiSsmParameter}}}"
+      ImageId: !Ref AmiId
       InstanceType: t3.micro
       IamInstanceProfile: !Ref EventsEC2IAMProfile
       # Opcional (no mencionado en el roadmap): Detailed monitoring
@@ -299,6 +299,18 @@ Resources:
           EOF
           sudo docker compose --env-file /opt/eventmanager/.env -f oci://${AppComposeArtifact} up -d
 
+  # Elastic IP and association for EC2 (so the instance keeps a stable public IP)
+  EventsElasticIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+
+  EventsEIPAssociation:
+    Type: AWS::EC2::EIPAssociation
+    Properties:
+      InstanceId: !Ref EventsEC2Instance
+      AllocationId: !GetAtt EventsElasticIP.AllocationId
+
 Outputs:
   PublicDnsName:
     Value: !GetAtt EventsEC2Instance.PublicDnsName
@@ -312,3 +324,7 @@ Outputs:
   S3Bucket:
     Value: !Ref EventsImageBucket
     Description: S3 bucket name
+
+  ElasticIp:
+    Value: !GetAtt EventsElasticIP.PublicIp
+    Description: Elastic IP associated to the EC2 instance

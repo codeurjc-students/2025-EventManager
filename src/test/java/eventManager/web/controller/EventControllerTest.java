@@ -28,7 +28,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * Pruebas unitarias del controlador de eventos. Cubre obtencion de eventos, creacion, actualizacion y consulta por codigo.
+ * Unit tests for the event controller. Covers event retrieval, creation,
+ * updates, and lookup by code.
  */
 @WebMvcTest(EventController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -41,13 +42,13 @@ class EventControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-        @MockitoBean
+    @MockitoBean
     private EventService eventService;
 
-        @MockitoBean
+    @MockitoBean
     private JwtTokenProvider jwtTokenProvider;
 
-        @MockitoBean
+    @MockitoBean
     private UserDetailsService userDetailsService;
 
     private EventDTO eventDTO;
@@ -56,7 +57,7 @@ class EventControllerTest {
 
     @BeforeEach
     void setUp() {
-        // EventDTO de respuesta
+        // Response EventDTO
         eventDTO = new EventDTO();
         eventDTO.setEventCode("ABC123");
         eventDTO.setEventName("Test Event");
@@ -65,7 +66,7 @@ class EventControllerTest {
         eventDTO.setDate(LocalDateTime.now().plusDays(7));
         eventDTO.setStatus("ACTIVO");
 
-        // DTO para crear/actualizar evento
+        // DTO for create/update event
         createEventDTO = CreateUpdateEventDTO.builder()
                 .eventName("Test Event")
                 .description("Test Description")
@@ -74,7 +75,7 @@ class EventControllerTest {
                 .status("ACTIVO")
                 .build();
 
-        // Resultado paginado
+        // Paginated result
         paginationDTO = new ResultPaginationDTO();
         paginationDTO.setData(new ArrayList<>());
         PaginationDTO pageDTO = new PaginationDTO();
@@ -86,134 +87,146 @@ class EventControllerTest {
     }
 
     /**
-     * Verifica que se obtienen los eventos correctamente con paginacion y todos los parametros.
+     * Verifies that events are retrieved correctly with pagination and all
+     * parameters.
      */
     @Test
-    @DisplayName("Get Events - Obtener eventos exitosamente con paginación")
+    @DisplayName("Get Events - Successfully retrieve events with pagination")
     @WithMockUser
     void testGetEvents_Success() throws Exception {
-        when(eventService.getEvents(anyInt(), anyInt(), anyString(), anyString(), anyString(), anyInt(), anyString())).thenReturn(paginationDTO);
+        when(eventService.getEvents(anyInt(), anyInt(), anyString(), anyString(), anyString(), anyInt(),
+                anyString())).thenReturn(paginationDTO);
 
         mockMvc.perform(get("/api/events")
-                        .param("page", "0")
-                        .param("userId", "1")
-                        .param("role", "HOST")
-                        .param("pageSize", "10")
-                        .param("sortBy", "eventDate")
-                        .param("sortDir", "ASC")
-                        .param("search", ""))
+                .param("page", "0")
+                .param("userId", "1")
+                .param("role", "HOST")
+                .param("pageSize", "10")
+                .param("sortBy", "eventDate")
+                .param("sortDir", "ASC")
+                .param("search", ""))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.page.number").value(0))
                 .andExpect(jsonPath("$.page.size").value(10));
 
-        verify(eventService, times(1)).getEvents(anyInt(), anyInt(), anyString(), anyString(), anyString(), anyInt(), anyString());
+        verify(eventService, times(1)).getEvents(anyInt(), anyInt(), anyString(), anyString(), anyString(),
+                anyInt(), anyString());
     }
 
     /**
-     * Verifica que se obtienen los eventos proporcionando solo los parametros minimos requeridos.
+     * Verifies that events are retrieved when only the minimum required parameters
+     * are provided.
      */
     @Test
-    @DisplayName("Get Events - Parámetros mínimos requeridos")
+    @DisplayName("Get Events - Minimum required parameters")
     @WithMockUser
     void testGetEvents_MinimalParams() throws Exception {
-                when(eventService.getEvents(anyInt(), nullable(Integer.class), anyString(), anyString(), nullable(String.class), anyInt(), anyString())).thenReturn(paginationDTO);
+        when(eventService.getEvents(anyInt(), nullable(Integer.class), anyString(), anyString(),
+                nullable(String.class), anyInt(), anyString())).thenReturn(paginationDTO);
 
         mockMvc.perform(get("/api/events")
-                        .param("page", "0")
-                        .param("userId", "1")
-                        .param("role", "GUEST"))
+                .param("page", "0")
+                .param("userId", "1")
+                .param("role", "GUEST"))
                 .andExpect(status().isOk());
 
-        verify(eventService, times(1)).getEvents(anyInt(), nullable(Integer.class), anyString(), anyString(), nullable(String.class), anyInt(), anyString());
+        verify(eventService, times(1)).getEvents(anyInt(), nullable(Integer.class), anyString(), anyString(),
+                nullable(String.class), anyInt(), anyString());
     }
 
     /**
-     * Verifica el comportamiento de la consulta de eventos cuando se proporciona una pagina negativa.
+     * Verifies the behavior of event queries when a negative page is provided.
      */
     @Test
-    @DisplayName("Get Events - Página inválida (negativa)")
+    @DisplayName("Get Events - Invalid page (negative)")
     @WithMockUser
     void testGetEvents_InvalidPage() throws Exception {
         mockMvc.perform(get("/api/events")
-                        .param("page", "-1")
-                        .param("userId", "1")
-                        .param("role", "HOST"))
-                                .andExpect(status().isOk());
+                .param("page", "-1")
+                .param("userId", "1")
+                .param("role", "HOST"))
+                .andExpect(status().isOk());
     }
 
     /**
-     * Verifica que la consulta de eventos falla cuando no se proporciona el userId.
+     * Verifies that the event query fails when userId is not provided.
      */
     @Test
-    @DisplayName("Get Events - UserId faltante")
+    @DisplayName("Get Events - Missing userId")
     @WithMockUser
     void testGetEvents_MissingUserId() throws Exception {
         mockMvc.perform(get("/api/events")
-                        .param("page", "0")
-                        .param("role", "HOST"))
-                                .andExpect(status().is5xxServerError());
-    }
-
-    /**
-     * Verifica que la consulta de eventos falla cuando se proporciona un rol invalido.
-     */
-    @Test
-    @DisplayName("Get Events - Role inválido")
-    @WithMockUser
-    void testGetEvents_InvalidRole() throws Exception {
-                when(eventService.getEvents(anyInt(), nullable(Integer.class), anyString(), anyString(), nullable(String.class), anyInt(), anyString())).thenThrow(new RuntimeException("Invalid role"));
-
-        mockMvc.perform(get("/api/events")
-                        .param("page", "0")
-                        .param("userId", "1")
-                        .param("role", "INVALID_ROLE"))
+                .param("page", "0")
+                .param("role", "HOST"))
                 .andExpect(status().is5xxServerError());
     }
 
     /**
-     * Verifica que la busqueda de eventos por nombre funciona correctamente.
+     * Verifies that the event query fails when an invalid role is provided.
      */
     @Test
-    @DisplayName("Get Events - Con búsqueda por nombre")
+    @DisplayName("Get Events - Invalid role")
+    @WithMockUser
+    void testGetEvents_InvalidRole() throws Exception {
+        when(eventService.getEvents(anyInt(), nullable(Integer.class), anyString(), anyString(),
+                nullable(String.class), anyInt(), anyString()))
+                .thenThrow(new RuntimeException("Invalid role"));
+
+        mockMvc.perform(get("/api/events")
+                .param("page", "0")
+                .param("userId", "1")
+                .param("role", "INVALID_ROLE"))
+                .andExpect(status().is5xxServerError());
+    }
+
+    /**
+     * Verifies that searching events by name works correctly.
+     */
+    @Test
+    @DisplayName("Get Events - With name search")
     @WithMockUser
     void testGetEvents_WithSearch() throws Exception {
-                when(eventService.getEvents(anyInt(), nullable(Integer.class), anyString(), anyString(), anyString(), anyInt(), anyString())).thenReturn(paginationDTO);
+        when(eventService.getEvents(anyInt(), nullable(Integer.class), anyString(), anyString(), anyString(),
+                anyInt(), anyString())).thenReturn(paginationDTO);
 
         mockMvc.perform(get("/api/events")
-                        .param("page", "0")
-                        .param("userId", "1")
-                        .param("role", "HOST")
-                        .param("search", "Birthday"))
+                .param("page", "0")
+                .param("userId", "1")
+                .param("role", "HOST")
+                .param("search", "Birthday"))
                 .andExpect(status().isOk());
 
-        verify(eventService, times(1)).getEvents(anyInt(), nullable(Integer.class), anyString(), anyString(), eq("Birthday"), anyInt(), anyString());
+        verify(eventService, times(1)).getEvents(anyInt(), nullable(Integer.class), anyString(), anyString(),
+                eq("Birthday"), anyInt(), anyString());
     }
 
     /**
-     * Verifica que la consulta de eventos funciona correctamente con ordenacion descendente.
+     * Verifies that event queries work correctly with descending sort order.
      */
     @Test
-    @DisplayName("Get Events - Ordenar descendente")
+    @DisplayName("Get Events - Sort descending")
     @WithMockUser
     void testGetEvents_SortDescending() throws Exception {
-                when(eventService.getEvents(anyInt(), nullable(Integer.class), anyString(), anyString(), nullable(String.class), anyInt(), anyString())).thenReturn(paginationDTO);
+        when(eventService.getEvents(anyInt(), nullable(Integer.class), anyString(), anyString(),
+                nullable(String.class), anyInt(), anyString())).thenReturn(paginationDTO);
 
         mockMvc.perform(get("/api/events")
-                        .param("page", "0")
-                        .param("userId", "1")
-                        .param("role", "HOST")
-                        .param("sortBy", "name")
-                        .param("sortDir", "DESC"))
+                .param("page", "0")
+                .param("userId", "1")
+                .param("role", "HOST")
+                .param("sortBy", "name")
+                .param("sortDir", "DESC"))
                 .andExpect(status().isOk());
 
-        verify(eventService, times(1)).getEvents(anyInt(), nullable(Integer.class), eq("name"), eq("DESC"), nullable(String.class), anyInt(), anyString());
+        verify(eventService, times(1)).getEvents(anyInt(), nullable(Integer.class), eq("name"), eq("DESC"),
+                nullable(String.class), anyInt(), anyString());
     }
 
     /**
-     * Verifica que se obtiene un evento correctamente a partir de su codigo.
+     * Verifies that an event is retrieved correctly by its code.
      */
     @Test
-    @DisplayName("Get Event By Code - Exitoso")
+    @DisplayName("Get Event By Code - Success")
     @WithMockUser
     void testGetEventByCode_Success() throws Exception {
         when(eventService.getEvent("ABC123")).thenReturn(eventDTO);
@@ -227,10 +240,10 @@ class EventControllerTest {
     }
 
     /**
-     * Verifica que la consulta por codigo falla cuando el evento no existe.
+     * Verifies that lookup by code fails when the event does not exist.
      */
     @Test
-    @DisplayName("Get Event By Code - Evento no encontrado")
+    @DisplayName("Get Event By Code - Event not found")
     @WithMockUser
     void testGetEventByCode_NotFound() throws Exception {
         when(eventService.getEvent("NOTFOUND")).thenThrow(new RuntimeException("Event not found"));
@@ -242,10 +255,10 @@ class EventControllerTest {
     }
 
     /**
-     * Verifica que la consulta por codigo falla cuando el formato del codigo es incorrecto.
+     * Verifies that lookup by code fails when the code format is incorrect.
      */
     @Test
-    @DisplayName("Get Event By Code - Código inválido (formato incorrecto)")
+    @DisplayName("Get Event By Code - Invalid code (incorrect format)")
     @WithMockUser
     void testGetEventByCode_InvalidFormat() throws Exception {
         when(eventService.getEvent("abc")).thenThrow(new RuntimeException("Invalid event code format"));
@@ -257,29 +270,29 @@ class EventControllerTest {
     }
 
     /**
-     * Verifica que la consulta por codigo falla cuando se proporciona un codigo null.
+     * Verifies that lookup by code fails when a null code is provided.
      */
     @Test
-    @DisplayName("Get Event By Code - Código null")
+    @DisplayName("Get Event By Code - Null code")
     @WithMockUser
     void testGetEventByCode_NullCode() throws Exception {
         mockMvc.perform(get("/api/events/{eventCode}", (Object) null))
-                                .andExpect(status().is5xxServerError());
+                .andExpect(status().is5xxServerError());
     }
 
     /**
-     * Verifica que la creacion de un evento funciona correctamente con datos validos.
+     * Verifies that event creation works correctly with valid data.
      */
     @Test
-    @DisplayName("Create Event - Creación exitosa")
+    @DisplayName("Create Event - Successful creation")
     @WithMockUser
     void testCreateEvent_Success() throws Exception {
         when(eventService.createEvent(eq(1), any(CreateUpdateEventDTO.class))).thenReturn(eventDTO);
 
         mockMvc.perform(post("/api/events")
-                        .param("userId", "1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createEventDTO)))
+                .param("userId", "1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createEventDTO)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.eventCode").value("ABC123"))
                 .andExpect(jsonPath("$.eventName").value("Test Event"));
@@ -288,14 +301,15 @@ class EventControllerTest {
     }
 
     /**
-     * Verifica que la creacion se rechaza cuando el nombre del evento excede los 100 caracteres.
+     * Verifies that creation is rejected when the event name exceeds 100
+     * characters.
      */
     @Test
-    @DisplayName("Create Event - Nombre demasiado largo")
+    @DisplayName("Create Event - Name too long")
     @WithMockUser
     void testCreateEvent_NameTooLong() throws Exception {
         CreateUpdateEventDTO invalidDTO = CreateUpdateEventDTO.builder()
-                .eventName("A".repeat(105))  // > 100 caracteres
+                .eventName("A".repeat(105)) // > 100 characters
                 .description("Test Description")
                 .place("Test Location")
                 .date(LocalDateTime.now().plusDays(7))
@@ -303,63 +317,65 @@ class EventControllerTest {
                 .build();
 
         mockMvc.perform(post("/api/events")
-                        .param("userId", "1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidDTO)))
+                .param("userId", "1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidDTO)))
                 .andExpect(status().isBadRequest());
     }
 
     /**
-     * Verifica que la creacion se rechaza cuando la descripcion excede los 500 caracteres.
+     * Verifies that creation is rejected when the description exceeds 500
+     * characters.
      */
     @Test
-    @DisplayName("Create Event - Descripción demasiado larga")
+    @DisplayName("Create Event - Description too long")
     @WithMockUser
     void testCreateEvent_DescriptionTooLong() throws Exception {
         CreateUpdateEventDTO invalidDTO = CreateUpdateEventDTO.builder()
                 .eventName("Test Event")
-                .description("A".repeat(505))  // > 500 caracteres
+                .description("A".repeat(505)) // > 500 characters
                 .place("Test Location")
                 .date(LocalDateTime.now().plusDays(7))
                 .status("ACTIVO")
                 .build();
 
         mockMvc.perform(post("/api/events")
-                        .param("userId", "1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidDTO)))
+                .param("userId", "1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidDTO)))
                 .andExpect(status().isBadRequest());
     }
 
     /**
-     * Verifica que la creacion falla cuando se proporciona una fecha en el pasado.
+     * Verifies that creation fails when a date in the past is provided.
      */
     @Test
-    @DisplayName("Create Event - Fecha en el pasado")
+    @DisplayName("Create Event - Date in the past")
     @WithMockUser
     void testCreateEvent_PastDate() throws Exception {
         CreateUpdateEventDTO pastDateDTO = CreateUpdateEventDTO.builder()
                 .eventName("Test Event")
                 .description("Test Description")
                 .place("Test Location")
-                .date(LocalDateTime.now().minusDays(1))  // Fecha pasada
+                .date(LocalDateTime.now().minusDays(1)) // Past date
                 .status("ACTIVO")
                 .build();
 
-        when(eventService.createEvent(eq(1), any(CreateUpdateEventDTO.class))).thenThrow(new RuntimeException("Event date cannot be in the past"));
+        when(eventService.createEvent(eq(1), any(CreateUpdateEventDTO.class)))
+                .thenThrow(new RuntimeException("Event date cannot be in the past"));
 
         mockMvc.perform(post("/api/events")
-                        .param("userId", "1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(pastDateDTO)))
+                .param("userId", "1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(pastDateDTO)))
                 .andExpect(status().is5xxServerError());
     }
 
     /**
-     * Verifica el comportamiento de la creacion cuando se proporciona una capacidad maxima invalida.
+     * Verifies creation behavior when an invalid maximum capacity is provided.
      */
     @Test
-    @DisplayName("Create Event - Capacidad máxima inválida (negativa)")
+    @DisplayName("Create Event - Invalid max capacity (negative)")
     @WithMockUser
     void testCreateEvent_InvalidMaxCapacity() throws Exception {
         CreateUpdateEventDTO invalidCapacityDTO = CreateUpdateEventDTO.builder()
@@ -371,17 +387,17 @@ class EventControllerTest {
                 .build();
 
         mockMvc.perform(post("/api/events")
-                        .param("userId", "1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidCapacityDTO)))
+                .param("userId", "1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidCapacityDTO)))
                 .andExpect(status().isCreated());
     }
 
     /**
-     * Verifica que la creacion falla cuando la capacidad maxima es cero.
+     * Verifies that creation fails when the maximum capacity is zero.
      */
     @Test
-    @DisplayName("Create Event - Capacidad máxima cero")
+    @DisplayName("Create Event - Max capacity zero")
     @WithMockUser
     void testCreateEvent_ZeroMaxCapacity() throws Exception {
         CreateUpdateEventDTO zeroCapacityDTO = CreateUpdateEventDTO.builder()
@@ -392,20 +408,21 @@ class EventControllerTest {
                 .status("ACTIVO")
                 .build();
 
-        when(eventService.createEvent(eq(1), any(CreateUpdateEventDTO.class))).thenThrow(new RuntimeException("Max capacity must be positive"));
+        when(eventService.createEvent(eq(1), any(CreateUpdateEventDTO.class)))
+                .thenThrow(new RuntimeException("Max capacity must be positive"));
 
         mockMvc.perform(post("/api/events")
-                        .param("userId", "1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(zeroCapacityDTO)))
+                .param("userId", "1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(zeroCapacityDTO)))
                 .andExpect(status().is5xxServerError());
     }
 
     /**
-     * Verifica el comportamiento de la creacion cuando los campos obligatorios son null.
+     * Verifies creation behavior when required fields are null.
      */
     @Test
-    @DisplayName("Create Event - Campos obligatorios null")
+    @DisplayName("Create Event - Required fields are null")
     @WithMockUser
     void testCreateEvent_RequiredFieldsNull() throws Exception {
         CreateUpdateEventDTO nullFieldsDTO = CreateUpdateEventDTO.builder()
@@ -417,33 +434,34 @@ class EventControllerTest {
                 .build();
 
         mockMvc.perform(post("/api/events")
-                        .param("userId", "1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(nullFieldsDTO)))
+                .param("userId", "1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(nullFieldsDTO)))
                 .andExpect(status().isCreated());
     }
 
     /**
-     * Verifica que la creacion falla cuando el usuario asociado no existe.
+     * Verifies that creation fails when the associated user does not exist.
      */
     @Test
-    @DisplayName("Create Event - Usuario no encontrado")
+    @DisplayName("Create Event - User not found")
     @WithMockUser
     void testCreateEvent_UserNotFound() throws Exception {
-        when(eventService.createEvent(eq(999), any(CreateUpdateEventDTO.class))).thenThrow(new RuntimeException("User not found"));
+        when(eventService.createEvent(eq(999), any(CreateUpdateEventDTO.class)))
+                .thenThrow(new RuntimeException("User not found"));
 
         mockMvc.perform(post("/api/events")
-                        .param("userId", "999")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createEventDTO)))
+                .param("userId", "999")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createEventDTO)))
                 .andExpect(status().is5xxServerError());
     }
 
     /**
-     * Verifica que la actualizacion de un evento funciona correctamente con datos validos.
+     * Verifies that updating an event works correctly with valid data.
      */
     @Test
-    @DisplayName("Update Event - Actualización exitosa")
+    @DisplayName("Update Event - Successful update")
     @WithMockUser
     void testUpdateEvent_Success() throws Exception {
         EventDTO updatedEvent = new EventDTO();
@@ -454,8 +472,8 @@ class EventControllerTest {
         when(eventService.updateEvent(eq("ABC123"), any(CreateUpdateEventDTO.class))).thenReturn(updatedEvent);
 
         mockMvc.perform(put("/api/events/{eventCode}", "ABC123")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createEventDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createEventDTO)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.eventCode").value("ABC123"));
 
@@ -463,31 +481,32 @@ class EventControllerTest {
     }
 
     /**
-     * Verifica que la actualizacion falla cuando el evento no existe.
+     * Verifies that update fails when the event does not exist.
      */
     @Test
-    @DisplayName("Update Event - Evento no encontrado")
+    @DisplayName("Update Event - Event not found")
     @WithMockUser
     void testUpdateEvent_NotFound() throws Exception {
-        when(eventService.updateEvent(eq("NOTFOUND"), any(CreateUpdateEventDTO.class))).thenThrow(new RuntimeException("Event not found"));
+        when(eventService.updateEvent(eq("NOTFOUND"), any(CreateUpdateEventDTO.class)))
+                .thenThrow(new RuntimeException("Event not found"));
 
         mockMvc.perform(put("/api/events/{eventCode}", "NOTFOUND")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(createEventDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(createEventDTO)))
                 .andExpect(status().is5xxServerError());
 
         verify(eventService, times(1)).updateEvent(eq("NOTFOUND"), any(CreateUpdateEventDTO.class));
     }
 
     /**
-     * Verifica que la actualizacion se rechaza cuando los datos proporcionados son invalidos.
+     * Verifies that update is rejected when the provided data is invalid.
      */
     @Test
-    @DisplayName("Update Event - Datos inválidos")
+    @DisplayName("Update Event - Invalid data")
     @WithMockUser
     void testUpdateEvent_InvalidData() throws Exception {
         CreateUpdateEventDTO invalidDTO = CreateUpdateEventDTO.builder()
-                .eventName("A".repeat(105))  // Nombre demasiado largo
+                .eventName("A".repeat(105)) // Name too long
                 .description("Test")
                 .place("Test")
                 .date(LocalDateTime.now().plusDays(7))
@@ -495,16 +514,16 @@ class EventControllerTest {
                 .build();
 
         mockMvc.perform(put("/api/events/{eventCode}", "ABC123")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidDTO)))
                 .andExpect(status().isBadRequest());
     }
 
     /**
-     * Verifica que la actualizacion falla cuando se reduce la capacidad por debajo de los asistentes actuales.
+     * Verifies that update fails when reducing capacity below current attendees.
      */
     @Test
-    @DisplayName("Update Event - Reducir capacidad por debajo de asistentes actuales")
+    @DisplayName("Update Event - Reduce capacity below current attendees")
     @WithMockUser
     void testUpdateEvent_CapacityBelowCurrentAttendees() throws Exception {
         CreateUpdateEventDTO reducedCapacityDTO = CreateUpdateEventDTO.builder()
@@ -515,11 +534,12 @@ class EventControllerTest {
                 .status("ACTIVO")
                 .build();
 
-        when(eventService.updateEvent(eq("ABC123"), any(CreateUpdateEventDTO.class))).thenThrow(new RuntimeException("Cannot reduce capacity below current attendees"));
+        when(eventService.updateEvent(eq("ABC123"), any(CreateUpdateEventDTO.class)))
+                .thenThrow(new RuntimeException("Cannot reduce capacity below current attendees"));
 
         mockMvc.perform(put("/api/events/{eventCode}", "ABC123")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(reducedCapacityDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(reducedCapacityDTO)))
                 .andExpect(status().is5xxServerError());
     }
 }

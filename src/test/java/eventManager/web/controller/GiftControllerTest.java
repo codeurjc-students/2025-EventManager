@@ -24,7 +24,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * Pruebas unitarias del controlador de regalos. Cubre creacion, obtencion, listado, actualizacion, eliminacion y contribuciones.
+ * Unit tests for the gift controller. Covers creation, retrieval, listing,
+ * updates, deletion, and contributions.
  */
 @WebMvcTest(GiftController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -37,13 +38,13 @@ class GiftControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-        @MockitoBean
+    @MockitoBean
     private GiftService giftService;
 
-        @MockitoBean
+    @MockitoBean
     private JwtTokenProvider jwtTokenProvider;
 
-        @MockitoBean
+    @MockitoBean
     private UserDetailsService userDetailsService;
 
     private GiftDTO giftDTO;
@@ -55,14 +56,14 @@ class GiftControllerTest {
 
     @BeforeEach
     void setUp() {
-        // GiftDTO básico
+        // Basic GiftDTO
         giftDTO = new GiftDTO();
         giftDTO.setGiftId(1);
         giftDTO.setName("Juego de mesa cooperativo");
         giftDTO.setPrice(100.00);
         giftDTO.setCollected(50.00);
 
-        // GiftExtendedDTO con información adicional
+        // GiftExtendedDTO with additional information
         giftExtendedDTO = new GiftExtendedDTO();
         giftExtendedDTO.setGiftId(1);
         giftExtendedDTO.setName("Juego de mesa cooperativo");
@@ -71,7 +72,7 @@ class GiftControllerTest {
         giftExtendedDTO.setCollected(50.00);
         giftExtendedDTO.setUserContributionList(new ArrayList<>());
 
-        // DTO para crear regalo
+        // DTO for gift creation
         giftCreateDTO = GiftCreateDTO.builder()
                 .name("Juego de mesa cooperativo")
                 .details("Regalo para la quedada de fin de semana")
@@ -80,7 +81,7 @@ class GiftControllerTest {
                 .image("https://imagenes.tienda-regalos.es/juego-mesa-cooperativo.jpg")
                 .build();
 
-        // DTO para actualizar regalo
+        // DTO for gift update
         giftUpdateDTO = GiftUpdateDTO.builder()
                 .name("Juego de mesa premium")
                 .details("Edicion coleccionista para regalo grupal")
@@ -89,13 +90,13 @@ class GiftControllerTest {
                 .image("https://imagenes.tienda-regalos.es/juego-mesa-premium.jpg")
                 .build();
 
-        // DTO para contribución
+        // DTO for contribution
         userGiftDTO = UserGiftDTO.builder()
                 .userId(1)
                 .amount(25.00)
                 .build();
 
-        // Resultado paginado
+        // Paginated result
         paginationDTO = new ResultPaginationDTO();
         paginationDTO.setData(new ArrayList<>());
         PaginationDTO pageDTO = new PaginationDTO();
@@ -107,18 +108,18 @@ class GiftControllerTest {
     }
 
     /**
-     * Verifica que la creacion de un regalo funciona correctamente con datos validos.
+     * Verifies that gift creation works correctly with valid data.
      */
     @Test
-    @DisplayName("Create Gift - Creación exitosa")
+    @DisplayName("Create Gift - Successful creation")
     @WithMockUser
     void testCreateGift_Success() throws Exception {
         when(giftService.createGift(eq("MADRID"), any(GiftCreateDTO.class)))
                 .thenReturn(giftDTO);
 
         mockMvc.perform(post("/api/events/{eventCode}/gifts", "MADRID")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(giftCreateDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(giftCreateDTO)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.giftId").value(1))
                 .andExpect(jsonPath("$.name").value("Juego de mesa cooperativo"));
@@ -127,68 +128,68 @@ class GiftControllerTest {
     }
 
     /**
-     * Verifica que la creacion de un regalo falla cuando el evento no existe.
+     * Verifies that gift creation fails when the event does not exist.
      */
     @Test
-    @DisplayName("Create Gift - Evento no encontrado")
+    @DisplayName("Create Gift - Event not found")
     @WithMockUser
     void testCreateGift_EventNotFound() throws Exception {
         when(giftService.createGift(eq("NOTFOUND"), any(GiftCreateDTO.class)))
                 .thenThrow(new RuntimeException("Event not found"));
 
         mockMvc.perform(post("/api/events/{eventCode}/gifts", "NOTFOUND")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(giftCreateDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(giftCreateDTO)))
                 .andExpect(status().is5xxServerError());
 
         verify(giftService, times(1)).createGift(eq("NOTFOUND"), any(GiftCreateDTO.class));
     }
 
     /**
-     * Verifica que la creacion se rechaza cuando el nombre del regalo excede los 100 caracteres.
+     * Verifies that creation is rejected when the gift name exceeds 100 characters.
      */
     @Test
-    @DisplayName("Create Gift - Nombre demasiado largo")
+    @DisplayName("Create Gift - Name too long")
     @WithMockUser
     void testCreateGift_NameTooLong() throws Exception {
         GiftCreateDTO invalidDTO = GiftCreateDTO.builder()
-                .name("A".repeat(105))  // > 100 caracteres
+                .name("A".repeat(105)) // > 100 characters
                 .details("Regalo")
                 .price(100.00)
                 .url("https://tienda-regalos.es")
                 .build();
 
         mockMvc.perform(post("/api/events/{eventCode}/gifts", "MADRID")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidDTO)))
                 .andExpect(status().isBadRequest());
     }
 
     /**
-     * Verifica el comportamiento de la creacion cuando se proporciona un precio objetivo negativo.
+     * Verifies creation behavior when a negative target price is provided.
      */
     @Test
-    @DisplayName("Create Gift - Precio objetivo negativo")
+    @DisplayName("Create Gift - Negative target price")
     @WithMockUser
     void testCreateGift_NegativeTargetPrice() throws Exception {
         GiftCreateDTO invalidDTO = GiftCreateDTO.builder()
                 .name("Juego de mesa cooperativo")
                 .details("Regalo para evento familiar")
-                .price(-50.00)  // Precio negativo
+                .price(-50.00) // Negative price
                 .url("https://tienda-regalos.es")
                 .build();
 
         mockMvc.perform(post("/api/events/{eventCode}/gifts", "MADRID")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidDTO)))
                 .andExpect(status().isCreated());
     }
 
     /**
-     * Verifica que la creacion falla cuando el precio objetivo es cero.
+     * Verifies that creation fails when the target price is zero.
      */
     @Test
-    @DisplayName("Create Gift - Precio objetivo cero")
+    @DisplayName("Create Gift - Target price zero")
     @WithMockUser
     void testCreateGift_ZeroTargetPrice() throws Exception {
         GiftCreateDTO zeroDTO = GiftCreateDTO.builder()
@@ -202,16 +203,16 @@ class GiftControllerTest {
                 .thenThrow(new RuntimeException("Target price must be positive"));
 
         mockMvc.perform(post("/api/events/{eventCode}/gifts", "MADRID")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(zeroDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(zeroDTO)))
                 .andExpect(status().is5xxServerError());
     }
 
     /**
-     * Verifica el comportamiento de la creacion cuando los campos obligatorios son null.
+     * Verifies creation behavior when required fields are null.
      */
     @Test
-    @DisplayName("Create Gift - Campos obligatorios null")
+    @DisplayName("Create Gift - Required fields are null")
     @WithMockUser
     void testCreateGift_RequiredFieldsNull() throws Exception {
         GiftCreateDTO nullDTO = GiftCreateDTO.builder()
@@ -221,36 +222,36 @@ class GiftControllerTest {
                 .build();
 
         mockMvc.perform(post("/api/events/{eventCode}/gifts", "ABC123")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(nullDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(nullDTO)))
                 .andExpect(status().isCreated());
     }
 
     /**
-     * Verifica el comportamiento de la creacion cuando se proporciona una URL mal formada.
+     * Verifies creation behavior when a malformed URL is provided.
      */
     @Test
-    @DisplayName("Create Gift - URL inválida")
+    @DisplayName("Create Gift - Invalid URL")
     @WithMockUser
     void testCreateGift_InvalidUrl() throws Exception {
         GiftCreateDTO invalidUrlDTO = GiftCreateDTO.builder()
                 .name("Test Gift")
                 .details("Test Description")
                 .price(100.00)
-                .url("invalid-url")  // URL mal formada
+                .url("invalid-url") // Malformed URL
                 .build();
 
         mockMvc.perform(post("/api/events/{eventCode}/gifts", "ABC123")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidUrlDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidUrlDTO)))
                 .andExpect(status().isCreated());
     }
 
     /**
-     * Verifica que se obtiene la informacion de un regalo correctamente.
+     * Verifies that gift information is retrieved correctly.
      */
     @Test
-    @DisplayName("Get Gift - Obtener regalo exitosamente")
+    @DisplayName("Get Gift - Successfully retrieve gift")
     @WithMockUser
     void testGetGift_Success() throws Exception {
         when(giftService.getGiftInformation("ABC123", 1))
@@ -265,10 +266,10 @@ class GiftControllerTest {
     }
 
     /**
-     * Verifica que la consulta de un regalo falla cuando no existe.
+     * Verifies that retrieving a gift fails when it does not exist.
      */
     @Test
-    @DisplayName("Get Gift - Regalo no encontrado")
+    @DisplayName("Get Gift - Gift not found")
     @WithMockUser
     void testGetGift_NotFound() throws Exception {
         when(giftService.getGiftInformation("ABC123", 999))
@@ -281,10 +282,11 @@ class GiftControllerTest {
     }
 
     /**
-     * Verifica que la consulta de un regalo falla cuando el evento asociado no existe.
+     * Verifies that retrieving a gift fails when the associated event does not
+     * exist.
      */
     @Test
-    @DisplayName("Get Gift - Evento no encontrado")
+    @DisplayName("Get Gift - Event not found")
     @WithMockUser
     void testGetGift_EventNotFound() throws Exception {
         when(giftService.getGiftInformation("NOTFOUND", 1))
@@ -297,71 +299,74 @@ class GiftControllerTest {
     }
 
     /**
-     * Verifica que se listan los regalos de un evento correctamente con paginacion.
+     * Verifies that gifts are listed correctly for an event with pagination.
      */
     @Test
-    @DisplayName("Get Gifts - Listar regalos exitosamente")
+    @DisplayName("Get Gifts - Successfully list gifts")
     @WithMockUser
     void testGetGifts_Success() throws Exception {
         when(giftService.getGifts(eq("ABC123"), anyInt(), anyInt(), anyString(), anyString(), anyString()))
                 .thenReturn(paginationDTO);
 
         mockMvc.perform(get("/api/events/{eventCode}/gifts", "ABC123")
-                        .param("page", "0")
-                        .param("pageSize", "10")
-                        .param("sortBy", "name")
-                        .param("sortDir", "ASC")
-                        .param("search", ""))
+                .param("page", "0")
+                .param("pageSize", "10")
+                .param("sortBy", "name")
+                .param("sortDir", "ASC")
+                .param("search", ""))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.page.number").value(0))
                 .andExpect(jsonPath("$.page.size").value(10));
 
-        verify(giftService, times(1)).getGifts(eq("ABC123"), anyInt(), anyInt(), anyString(), anyString(), anyString());
+        verify(giftService, times(1)).getGifts(eq("ABC123"), anyInt(), anyInt(), anyString(), anyString(),
+                anyString());
     }
 
     /**
-     * Verifica que la busqueda de regalos por nombre funciona correctamente.
+     * Verifies that searching gifts by name works correctly.
      */
     @Test
-    @DisplayName("Get Gifts - Con búsqueda por nombre")
+    @DisplayName("Get Gifts - With name search")
     @WithMockUser
     void testGetGifts_WithSearch() throws Exception {
-                when(giftService.getGifts(eq("ABC123"), anyInt(), nullable(Integer.class), anyString(), anyString(), eq("Laptop")))
+        when(giftService.getGifts(eq("ABC123"), anyInt(), nullable(Integer.class), anyString(), anyString(),
+                eq("Laptop")))
                 .thenReturn(paginationDTO);
 
         mockMvc.perform(get("/api/events/{eventCode}/gifts", "ABC123")
-                        .param("page", "0")
-                        .param("search", "Laptop"))
+                .param("page", "0")
+                .param("search", "Laptop"))
                 .andExpect(status().isOk());
 
-        verify(giftService, times(1)).getGifts(eq("ABC123"), anyInt(), nullable(Integer.class), anyString(), anyString(), eq("Laptop"));
+        verify(giftService, times(1)).getGifts(eq("ABC123"), anyInt(), nullable(Integer.class), anyString(),
+                anyString(), eq("Laptop"));
     }
 
     /**
-     * Verifica el comportamiento del listado de regalos cuando se proporciona una pagina invalida.
+     * Verifies gift listing behavior when an invalid page is provided.
      */
     @Test
-    @DisplayName("Get Gifts - Página inválida")
+    @DisplayName("Get Gifts - Invalid page")
     @WithMockUser
     void testGetGifts_InvalidPage() throws Exception {
         mockMvc.perform(get("/api/events/{eventCode}/gifts", "ABC123")
-                        .param("page", "-1"))
-                                .andExpect(status().isOk());
+                .param("page", "-1"))
+                .andExpect(status().isOk());
     }
 
     /**
-     * Verifica que la actualizacion de un regalo funciona correctamente con datos validos.
+     * Verifies that a gift update works correctly with valid data.
      */
     @Test
-    @DisplayName("Update Gift - Actualización exitosa")
+    @DisplayName("Update Gift - Successful update")
     @WithMockUser
     void testUpdateGift_Success() throws Exception {
         when(giftService.updateGift(eq("ABC123"), eq(1), any(GiftUpdateDTO.class)))
                 .thenReturn(giftExtendedDTO);
 
         mockMvc.perform(put("/api/events/{eventCode}/gifts/{giftId}", "ABC123", 1)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(giftUpdateDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(giftUpdateDTO)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.giftId").value(1));
 
@@ -369,47 +374,47 @@ class GiftControllerTest {
     }
 
     /**
-     * Verifica que la actualizacion falla cuando el regalo no existe.
+     * Verifies that update fails when the gift does not exist.
      */
     @Test
-    @DisplayName("Update Gift - Regalo no encontrado")
+    @DisplayName("Update Gift - Gift not found")
     @WithMockUser
     void testUpdateGift_NotFound() throws Exception {
         when(giftService.updateGift(eq("ABC123"), eq(999), any(GiftUpdateDTO.class)))
                 .thenThrow(new RuntimeException("Gift not found"));
 
         mockMvc.perform(put("/api/events/{eventCode}/gifts/{giftId}", "ABC123", 999)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(giftUpdateDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(giftUpdateDTO)))
                 .andExpect(status().is5xxServerError());
 
         verify(giftService, times(1)).updateGift(eq("ABC123"), eq(999), any(GiftUpdateDTO.class));
     }
 
     /**
-     * Verifica que la actualizacion se rechaza cuando los datos proporcionados son invalidos.
+     * Verifies that update is rejected when the provided data is invalid.
      */
     @Test
-    @DisplayName("Update Gift - Datos inválidos")
+    @DisplayName("Update Gift - Invalid data")
     @WithMockUser
     void testUpdateGift_InvalidData() throws Exception {
         GiftUpdateDTO invalidDTO = GiftUpdateDTO.builder()
-                .name("A".repeat(105))  // Demasiado largo
+                .name("A".repeat(105)) // Too long
                 .details("Test")
                 .price(100.00)
                 .build();
 
         mockMvc.perform(put("/api/events/{eventCode}/gifts/{giftId}", "ABC123", 1)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidDTO)))
                 .andExpect(status().isBadRequest());
     }
 
     /**
-     * Verifica que la eliminacion de un regalo funciona correctamente.
+     * Verifies that deleting a gift works correctly.
      */
     @Test
-    @DisplayName("Delete Gift - Eliminación exitosa")
+    @DisplayName("Delete Gift - Successful deletion")
     @WithMockUser
     void testDeleteGift_Success() throws Exception {
         when(giftService.deleteGift("ABC123", 1))
@@ -423,10 +428,10 @@ class GiftControllerTest {
     }
 
     /**
-     * Verifica que la eliminacion falla cuando el regalo no existe.
+     * Verifies that deletion fails when the gift does not exist.
      */
     @Test
-    @DisplayName("Delete Gift - Regalo no encontrado")
+    @DisplayName("Delete Gift - Gift not found")
     @WithMockUser
     void testDeleteGift_NotFound() throws Exception {
         when(giftService.deleteGift("ABC123", 999))
@@ -439,10 +444,10 @@ class GiftControllerTest {
     }
 
     /**
-     * Verifica que la eliminacion falla cuando el regalo tiene contribuciones asociadas.
+     * Verifies that deletion fails when the gift has associated contributions.
      */
     @Test
-    @DisplayName("Delete Gift - Regalo con contribuciones")
+    @DisplayName("Delete Gift - Gift with contributions")
     @WithMockUser
     void testDeleteGift_WithContributions() throws Exception {
         when(giftService.deleteGift("ABC123", 1))
@@ -455,18 +460,18 @@ class GiftControllerTest {
     }
 
     /**
-     * Verifica que la creacion de una contribucion a un regalo funciona correctamente.
+     * Verifies that creating a contribution to a gift works correctly.
      */
     @Test
-    @DisplayName("Create Contribution - Contribución exitosa")
+    @DisplayName("Create Contribution - Successful contribution")
     @WithMockUser
     void testCreateContribution_Success() throws Exception {
         when(giftService.createUpdateGiftContribution(eq("ABC123"), eq(1), any(UserGiftDTO.class)))
                 .thenReturn(giftExtendedDTO);
 
         mockMvc.perform(post("/api/events/{eventCode}/gifts/{giftId}", "ABC123", 1)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(userGiftDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(userGiftDTO)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.giftId").value(1));
 
@@ -474,10 +479,10 @@ class GiftControllerTest {
     }
 
     /**
-     * Verifica el comportamiento de la contribucion cuando el monto es negativo.
+     * Verifies contribution behavior when the amount is negative.
      */
     @Test
-    @DisplayName("Create Contribution - Monto negativo")
+    @DisplayName("Create Contribution - Negative amount")
     @WithMockUser
     void testCreateContribution_NegativeAmount() throws Exception {
         UserGiftDTO negativeDTO = UserGiftDTO.builder()
@@ -486,37 +491,38 @@ class GiftControllerTest {
                 .build();
 
         mockMvc.perform(post("/api/events/{eventCode}/gifts/{giftId}", "ABC123", 1)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(negativeDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(negativeDTO)))
                 .andExpect(status().isCreated());
     }
 
     /**
-     * Verifica que la contribucion falla cuando el monto excede el precio objetivo del regalo.
+     * Verifies that the contribution fails when the amount exceeds the gift target
+     * price.
      */
     @Test
-    @DisplayName("Create Contribution - Monto excede precio objetivo")
+    @DisplayName("Create Contribution - Amount exceeds target price")
     @WithMockUser
     void testCreateContribution_ExceedsTargetPrice() throws Exception {
         UserGiftDTO excessDTO = UserGiftDTO.builder()
                 .userId(1)
-                .amount(200.00)  // > targetPrice
+                .amount(200.00) // > targetPrice
                 .build();
 
         when(giftService.createUpdateGiftContribution(eq("ABC123"), eq(1), any(UserGiftDTO.class)))
                 .thenThrow(new RuntimeException("Contribution exceeds remaining amount"));
 
         mockMvc.perform(post("/api/events/{eventCode}/gifts/{giftId}", "ABC123", 1)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(excessDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(excessDTO)))
                 .andExpect(status().is5xxServerError());
     }
 
     /**
-     * Verifica que la contribucion falla cuando el usuario no existe.
+     * Verifies that the contribution fails when the user does not exist.
      */
     @Test
-    @DisplayName("Create Contribution - Usuario no encontrado")
+    @DisplayName("Create Contribution - User not found")
     @WithMockUser
     void testCreateContribution_UserNotFound() throws Exception {
         UserGiftDTO invalidUserDTO = UserGiftDTO.builder()
@@ -528,16 +534,16 @@ class GiftControllerTest {
                 .thenThrow(new RuntimeException("User not found"));
 
         mockMvc.perform(post("/api/events/{eventCode}/gifts/{giftId}", "ABC123", 1)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidUserDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidUserDTO)))
                 .andExpect(status().is5xxServerError());
     }
 
     /**
-     * Verifica que la contribucion falla cuando el monto es cero.
+     * Verifies that the contribution fails when the amount is zero.
      */
     @Test
-    @DisplayName("Create Contribution - Monto cero")
+    @DisplayName("Create Contribution - Zero amount")
     @WithMockUser
     void testCreateContribution_ZeroAmount() throws Exception {
         UserGiftDTO zeroDTO = UserGiftDTO.builder()
@@ -549,8 +555,8 @@ class GiftControllerTest {
                 .thenThrow(new RuntimeException("Contribution amount must be positive"));
 
         mockMvc.perform(post("/api/events/{eventCode}/gifts/{giftId}", "ABC123", 1)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(zeroDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(zeroDTO)))
                 .andExpect(status().is5xxServerError());
     }
 }

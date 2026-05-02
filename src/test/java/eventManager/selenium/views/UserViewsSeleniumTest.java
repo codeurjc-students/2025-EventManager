@@ -10,13 +10,15 @@ import java.time.Duration;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Tests de Selenium para las vistas de configuracion de usuario. Cubre la actualizacion del perfil (nombre, apellidos, telefono) y el cambio de contrasena, incluyendo los modos de lectura, edicion y validaciones.
+ * Selenium tests for user settings views. Covers profile updates (name, last
+ * name, phone) and password changes, including read-only/edit modes and
+ * validations.
  */
 @DisplayName("User Views Selenium Tests")
 public class UserViewsSeleniumTest extends BaseSeleniumTest {
 
     /**
-     * Autentica al usuario antes de cada test para tener acceso a las vistas de usuario.
+     * Authenticates the user before each test to access user views.
      */
     @BeforeEach
     public void authenticateUser() {
@@ -24,10 +26,11 @@ public class UserViewsSeleniumTest extends BaseSeleniumTest {
     }
 
     /**
-     * Verifica que la pagina de perfil muestra todos los campos esperados: nombre, apellidos, email y telefono.
+     * Verifies that the profile page shows all expected fields: first name, last
+     * name, email, and phone.
      */
     @Test
-    @DisplayName("User Update Profile View - Visualizar pagina de perfil")
+    @DisplayName("User Update Profile View - Display profile page")
     public void testUserUpdateProfileView_DisplayProfile() {
         navigateTo("/usuario/actualizar-perfil");
 
@@ -38,10 +41,10 @@ public class UserViewsSeleniumTest extends BaseSeleniumTest {
     }
 
     /**
-     * Verifica que los campos del perfil estan deshabilitados por defecto en modo solo lectura.
+     * Verifies that profile fields are disabled by default in read-only mode.
      */
     @Test
-    @DisplayName("User Update Profile View - Campos deshabilitados en modo lectura")
+    @DisplayName("User Update Profile View - Fields disabled in read-only mode")
     public void testUserUpdateProfileView_ReadOnlyMode() {
         navigateTo("/usuario/actualizar-perfil");
         waitForUiToSettle(Duration.ofMillis(1200));
@@ -51,10 +54,10 @@ public class UserViewsSeleniumTest extends BaseSeleniumTest {
     }
 
     /**
-     * Verifica que al pulsar Editar los campos del perfil se habilitan para su modificacion.
+     * Verifies that clicking Edit enables profile fields for modification.
      */
     @Test
-    @DisplayName("User Update Profile View - Habilitar edicion al pulsar Editar")
+    @DisplayName("User Update Profile View - Enable edit mode when clicking Edit")
     public void testUserUpdateProfileView_EnableEditMode() {
         navigateTo("/usuario/actualizar-perfil");
         waitForUiToSettle(Duration.ofMillis(1200));
@@ -69,14 +72,15 @@ public class UserViewsSeleniumTest extends BaseSeleniumTest {
 
         org.openqa.selenium.WebElement firstName = waitForElement(By.id("firstName"));
         assertTrue(firstName.isEnabled(), "El campo nombre deberia estar habilitado tras pulsar Editar");
-        assertTrue(isElementPresent(By.xpath("//button[text()='Guardar cambios']")), "Deberia mostrar el boton Guardar cambios");
+        assertTrue(isElementPresent(By.xpath("//button[text()='Guardar cambios']")),
+                "Deberia mostrar el boton Guardar cambios");
     }
 
     /**
-     * Verifica que se pueden actualizar los datos del perfil y se muestra un mensaje de exito.
+     * Verifies that profile data can be updated and a success message is shown.
      */
     @Test
-    @DisplayName("User Update Profile View - Actualizar perfil exitosamente")
+    @DisplayName("User Update Profile View - Update profile successfully")
     public void testUserUpdateProfileView_UpdateProfileSuccessfully() {
         navigateTo("/usuario/actualizar-perfil");
         waitForUiToSettle(Duration.ofMillis(1200));
@@ -99,10 +103,11 @@ public class UserViewsSeleniumTest extends BaseSeleniumTest {
     }
 
     /**
-     * Verifica que la actualizacion del perfil falla cuando el nombre excede la longitud maxima.
+     * Verifies that the profile update fails when the first name exceeds the
+     * maximum length.
      */
     @Test
-    @DisplayName("User Update Profile View - Error con firstName demasiado largo")
+    @DisplayName("User Update Profile View - Error with first name too long")
     public void testUserUpdateProfileView_FirstNameTooLong() {
         navigateTo("/usuario/actualizar-perfil");
         waitForUiToSettle(Duration.ofMillis(1200));
@@ -121,14 +126,16 @@ public class UserViewsSeleniumTest extends BaseSeleniumTest {
         clickElement(By.xpath("//button[text()='Guardar cambios']"));
         waitForUiToSettle(Duration.ofMillis(1200));
 
-        assertTrue(isErrorMessagePresent() || getCurrentUrl().contains("/usuario/actualizar-perfil"), "Deberia mostrar error con nombre demasiado largo");
+        assertTrue(isErrorMessagePresent() || getCurrentUrl().contains("/usuario/actualizar-perfil"),
+                "Deberia mostrar error con nombre demasiado largo");
     }
 
     /**
-     * Verifica que la actualizacion del perfil falla cuando el apellido excede la longitud maxima.
+     * Verifies that the profile update fails when the last name exceeds the maximum
+     * length.
      */
     @Test
-    @DisplayName("User Update Profile View - Error con lastName demasiado largo")
+    @DisplayName("User Update Profile View - Error with last name too long")
     public void testUserUpdateProfileView_LastNameTooLong() {
         navigateTo("/usuario/actualizar-perfil");
         waitForUiToSettle(Duration.ofMillis(1200));
@@ -147,14 +154,15 @@ public class UserViewsSeleniumTest extends BaseSeleniumTest {
         clickElement(By.xpath("//button[text()='Guardar cambios']"));
         waitForUiToSettle(Duration.ofMillis(1200));
 
-        assertTrue(isErrorMessagePresent() || getCurrentUrl().contains("/usuario/actualizar-perfil"), "Deberia mostrar error con apellido demasiado largo");
+        assertTrue(isErrorMessagePresent() || getCurrentUrl().contains("/usuario/actualizar-perfil"),
+                "Deberia mostrar error con apellido demasiado largo");
     }
 
     /**
-     * Verifica que al cancelar la edicion del perfil los campos vuelven a modo solo lectura.
+     * Verifies that canceling profile edits returns fields to read-only mode.
      */
     @Test
-    @DisplayName("User Update Profile View - Cancelar edicion revierte cambios")
+    @DisplayName("User Update Profile View - Cancel edit reverts changes")
     public void testUserUpdateProfileView_CancelUpdate() {
         navigateTo("/usuario/actualizar-perfil");
         waitForUiToSettle(Duration.ofMillis(1200));
@@ -176,10 +184,10 @@ public class UserViewsSeleniumTest extends BaseSeleniumTest {
     }
 
     /**
-     * Verifica que el formulario de cambio de contrasena muestra los tres campos requeridos.
+     * Verifies that the password change form shows the three required fields.
      */
     @Test
-    @DisplayName("User Update Password View - Visualizar formulario de cambio de contrasena")
+    @DisplayName("User Update Password View - Display password change form")
     public void testUserUpdatePasswordView_DisplayPasswordForm() {
         navigateTo("/usuario/actualizar-clave");
 
@@ -189,10 +197,11 @@ public class UserViewsSeleniumTest extends BaseSeleniumTest {
     }
 
     /**
-     * Verifica que se puede cambiar la contrasena proporcionando la actual y una nueva valida.
+     * Verifies that the password can be changed by providing the current and a
+     * valid new password.
      */
     @Test
-    @DisplayName("User Update Password View - Cambiar contrasena exitosamente")
+    @DisplayName("User Update Password View - Change password successfully")
     public void testUserUpdatePasswordView_ChangePasswordSuccessfully() {
         navigateTo("/usuario/actualizar-clave");
 
@@ -202,14 +211,15 @@ public class UserViewsSeleniumTest extends BaseSeleniumTest {
         clickElement(By.cssSelector("button[type='submit']"));
         waitForUiToSettle();
 
-        assertTrue(isSuccessMessagePresent() || getCurrentUrl().contains("/usuario"), "Deberia cambiar la contrasena exitosamente");
+        assertTrue(isSuccessMessagePresent() || getCurrentUrl().contains("/usuario"),
+                "Deberia cambiar la contrasena exitosamente");
     }
 
     /**
-     * Verifica que se muestra un error al introducir una contrasena actual incorrecta.
+     * Verifies that an error is shown when the current password is incorrect.
      */
     @Test
-    @DisplayName("User Update Password View - Error con contrasena actual incorrecta")
+    @DisplayName("User Update Password View - Error with incorrect current password")
     public void testUserUpdatePasswordView_WrongCurrentPassword() {
         navigateTo("/usuario/actualizar-clave");
 
@@ -223,10 +233,11 @@ public class UserViewsSeleniumTest extends BaseSeleniumTest {
     }
 
     /**
-     * Verifica que se rechaza una nueva contrasena que no cumple con la longitud minima requerida.
+     * Verifies that a new password that does not meet the minimum length is
+     * rejected.
      */
     @Test
-    @DisplayName("User Update Password View - Error con nueva contrasena demasiado corta")
+    @DisplayName("User Update Password View - Error with new password too short")
     public void testUserUpdatePasswordView_NewPasswordTooShort() {
         navigateTo("/usuario/actualizar-clave");
 
@@ -236,14 +247,16 @@ public class UserViewsSeleniumTest extends BaseSeleniumTest {
         clickElement(By.cssSelector("button[type='submit']"));
         waitForUiToSettle(Duration.ofMillis(1200));
 
-        assertTrue(isErrorMessagePresent() || getCurrentUrl().contains("/usuario/actualizar-clave"), "Deberia mostrar error con contrasena corta");
+        assertTrue(isErrorMessagePresent() || getCurrentUrl().contains("/usuario/actualizar-clave"),
+                "Deberia mostrar error con contrasena corta");
     }
 
     /**
-     * Verifica que se muestra un error cuando la nueva contrasena y su confirmacion no coinciden.
+     * Verifies that an error is shown when the new password and confirmation do not
+     * match.
      */
     @Test
-    @DisplayName("User Update Password View - Error con confirmacion no coincidente")
+    @DisplayName("User Update Password View - Error with mismatched confirmation")
     public void testUserUpdatePasswordView_PasswordMismatch() {
         navigateTo("/usuario/actualizar-clave");
 
@@ -253,14 +266,15 @@ public class UserViewsSeleniumTest extends BaseSeleniumTest {
         clickElement(By.cssSelector("button[type='submit']"));
         waitForUiToSettle(Duration.ofMillis(1200));
 
-        assertTrue(isErrorMessagePresent() || getCurrentUrl().contains("/usuario/actualizar-clave"), "Deberia mostrar error si las contrasenas no coinciden");
+        assertTrue(isErrorMessagePresent() || getCurrentUrl().contains("/usuario/actualizar-clave"),
+                "Deberia mostrar error si las contrasenas no coinciden");
     }
 
     /**
-     * Verifica que el boton de envio esta deshabilitado cuando todos los campos estan vacios.
+     * Verifies that the submit button is disabled when all fields are empty.
      */
     @Test
-    @DisplayName("User Update Password View - Boton deshabilitado con campos vacios")
+    @DisplayName("User Update Password View - Submit button disabled with empty fields")
     public void testUserUpdatePasswordView_SubmitDisabledWithEmptyFields() {
         navigateTo("/usuario/actualizar-clave");
 
@@ -269,16 +283,17 @@ public class UserViewsSeleniumTest extends BaseSeleniumTest {
         waitForUiToSettle(Duration.ofMillis(900));
 
         assertTrue(
-            !submitBtn.isEnabled() || getCurrentUrl().contains("/usuario/actualizar-clave") || isErrorMessagePresent(),
-            "Con campos vacíos, no debería completarse el cambio de contraseña"
-        );
+                !submitBtn.isEnabled() || getCurrentUrl().contains("/usuario/actualizar-clave")
+                        || isErrorMessagePresent(),
+                "Con campos vacíos, no debería completarse el cambio de contraseña");
     }
 
     /**
-     * Verifica que el boton de envio permanece deshabilitado si solo se rellena la contrasena actual.
+     * Verifies that the submit button remains disabled if only the current password
+     * is filled in.
      */
     @Test
-    @DisplayName("User Update Password View - Error con campos parcialmente rellenos")
+    @DisplayName("User Update Password View - Error with partially filled fields")
     public void testUserUpdatePasswordView_OnlyCurrentPassword() {
         navigateTo("/usuario/actualizar-clave");
 

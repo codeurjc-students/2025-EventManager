@@ -25,7 +25,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Pruebas unitarias del servicio de usuarios, incluyendo consulta, actualizacion, eliminacion y cambio de contrasena.
+ * Unit tests for the user service, including retrieval, updates, deletion, and
+ * password changes.
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("UserServiceImpl Tests")
@@ -72,10 +73,10 @@ class UserServiceImplTest {
     }
 
     /**
-     * Verifica que se obtiene correctamente la informacion de un usuario buscando por su nombre de usuario.
+     * Verifies that user information is retrieved correctly by username.
      */
     @Test
-    @DisplayName("getUserInformationByUsername - Exitoso")
+    @DisplayName("getUserInformationByUsername - Success")
     void testGetByUsername_Success() {
         when(userRepository.findByUsername("carlos.martinez")).thenReturn(Optional.of(testUser));
         when(userMapper.convertUserToUserDTO(testUser)).thenReturn(testUserDTO);
@@ -88,22 +89,23 @@ class UserServiceImplTest {
     }
 
     /**
-     * Verifica que buscar un nombre de usuario inexistente lanza una excepcion BAD_REQUEST.
+     * Verifies that looking up a non-existent username throws BAD_REQUEST.
      */
     @Test
-    @DisplayName("getUserInformationByUsername - No encontrado")
+    @DisplayName("getUserInformationByUsername - Not found")
     void testGetByUsername_NotFound() {
         when(userRepository.findByUsername("nonexistent")).thenReturn(Optional.empty());
 
-        CustomException ex = assertThrows(CustomException.class, () -> userService.getUserInformationByUsername("nonexistent"));
+        CustomException ex = assertThrows(CustomException.class,
+                () -> userService.getUserInformationByUsername("nonexistent"));
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
     }
 
     /**
-     * Verifica que se obtiene correctamente la informacion de un usuario por su identificador.
+     * Verifies that user information is retrieved correctly by ID.
      */
     @Test
-    @DisplayName("getUserInformation - Exitoso")
+    @DisplayName("getUserInformation - Success")
     void testGetUserInfo_Success() {
         doNothing().when(accessControlUtils).validateUserOwnership(1);
         when(userRepository.findById(1)).thenReturn(Optional.of(testUser));
@@ -116,22 +118,23 @@ class UserServiceImplTest {
     }
 
     /**
-     * Verifica que un usuario no propietario no puede consultar la informacion de otro usuario.
+     * Verifies that a non-owner user cannot access another user's information.
      */
     @Test
-    @DisplayName("getUserInformation - No propietario, lanza FORBIDDEN")
+    @DisplayName("getUserInformation - Not owner, throws FORBIDDEN")
     void testGetUserInfo_NotOwner() {
-        doThrow(new CustomException(HttpStatus.FORBIDDEN, Constantes.MESSAGE_FORBIDDEN_ACCESS)).when(accessControlUtils).validateUserOwnership(2);
+        doThrow(new CustomException(HttpStatus.FORBIDDEN, Constantes.MESSAGE_FORBIDDEN_ACCESS)).when(accessControlUtils)
+                .validateUserOwnership(2);
 
         CustomException ex = assertThrows(CustomException.class, () -> userService.getUserInformation(2));
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
     }
 
     /**
-     * Verifica que consultar un usuario inexistente por identificador lanza BAD_REQUEST.
+     * Verifies that looking up a non-existent user by ID throws BAD_REQUEST.
      */
     @Test
-    @DisplayName("getUserInformation - No encontrado")
+    @DisplayName("getUserInformation - Not found")
     void testGetUserInfo_NotFound() {
         doNothing().when(accessControlUtils).validateUserOwnership(999);
         when(userRepository.findById(999)).thenReturn(Optional.empty());
@@ -141,10 +144,10 @@ class UserServiceImplTest {
     }
 
     /**
-     * Verifica que se recupera correctamente la entidad User a partir de su identificador.
+     * Verifies that the User entity is retrieved correctly by ID.
      */
     @Test
-    @DisplayName("getUser - Exitoso, retorna entidad User")
+    @DisplayName("getUser - Success, returns User entity")
     void testGetUser_Success() {
         when(userRepository.findById(1)).thenReturn(Optional.of(testUser));
 
@@ -155,10 +158,10 @@ class UserServiceImplTest {
     }
 
     /**
-     * Verifica que buscar un usuario inexistente por identificador lanza BAD_REQUEST.
+     * Verifies that looking up a non-existent user by ID throws BAD_REQUEST.
      */
     @Test
-    @DisplayName("getUser - No encontrado")
+    @DisplayName("getUser - Not found")
     void testGetUser_NotFound() {
         when(userRepository.findById(999)).thenReturn(Optional.empty());
 
@@ -167,10 +170,10 @@ class UserServiceImplTest {
     }
 
     /**
-     * Verifica que la actualizacion de los datos de un usuario se realiza correctamente.
+     * Verifies that updating a user's data completes correctly.
      */
     @Test
-    @DisplayName("updateUser - Actualizacion exitosa")
+    @DisplayName("updateUser - Successful update")
     void testUpdateUser_Success() {
         UserUpdateDTO updateDTO = UserUpdateDTO.builder()
                 .firstName("Updated")
@@ -192,35 +195,38 @@ class UserServiceImplTest {
     }
 
     /**
-     * Verifica que un usuario no propietario no puede actualizar los datos de otro usuario.
+     * Verifies that a non-owner user cannot update another user's data.
      */
     @Test
-    @DisplayName("updateUser - No propietario")
+    @DisplayName("updateUser - Not owner")
     void testUpdateUser_NotOwner() {
-        doThrow(new CustomException(HttpStatus.FORBIDDEN, Constantes.MESSAGE_FORBIDDEN_ACCESS)).when(accessControlUtils).validateUserOwnership(2);
+        doThrow(new CustomException(HttpStatus.FORBIDDEN, Constantes.MESSAGE_FORBIDDEN_ACCESS)).when(accessControlUtils)
+                .validateUserOwnership(2);
 
-        CustomException ex = assertThrows(CustomException.class, () -> userService.updateUser(2, UserUpdateDTO.builder().build()));
+        CustomException ex = assertThrows(CustomException.class,
+                () -> userService.updateUser(2, UserUpdateDTO.builder().build()));
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
     }
 
     /**
-     * Verifica que intentar actualizar un usuario inexistente lanza BAD_REQUEST.
+     * Verifies that attempting to update a non-existent user throws BAD_REQUEST.
      */
     @Test
-    @DisplayName("updateUser - Usuario no encontrado")
+    @DisplayName("updateUser - User not found")
     void testUpdateUser_NotFound() {
         doNothing().when(accessControlUtils).validateUserOwnership(999);
         when(userRepository.findById(999)).thenReturn(Optional.empty());
 
-        CustomException ex = assertThrows(CustomException.class, () -> userService.updateUser(999, UserUpdateDTO.builder().build()));
+        CustomException ex = assertThrows(CustomException.class,
+                () -> userService.updateUser(999, UserUpdateDTO.builder().build()));
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
     }
 
     /**
-     * Verifica que la eliminacion de un usuario existente se completa correctamente.
+     * Verifies that deleting an existing user completes correctly.
      */
     @Test
-    @DisplayName("deleteUser - Eliminacion exitosa")
+    @DisplayName("deleteUser - Successful deletion")
     void testDeleteUser_Success() {
         when(userRepository.findById(1)).thenReturn(Optional.of(testUser));
         when(userMapper.convertUserToUserDTO(testUser)).thenReturn(testUserDTO);
@@ -232,10 +238,10 @@ class UserServiceImplTest {
     }
 
     /**
-     * Verifica que intentar eliminar un usuario inexistente lanza BAD_REQUEST.
+     * Verifies that attempting to delete a non-existent user throws BAD_REQUEST.
      */
     @Test
-    @DisplayName("deleteUser - No encontrado")
+    @DisplayName("deleteUser - Not found")
     void testDeleteUser_NotFound() {
         when(userRepository.findById(999)).thenReturn(Optional.empty());
 
@@ -244,10 +250,10 @@ class UserServiceImplTest {
     }
 
     /**
-     * Verifica que el cambio de contrasena se realiza correctamente cuando los datos son validos.
+     * Verifies that password change completes correctly when data is valid.
      */
     @Test
-    @DisplayName("updateUserPassword - Cambio exitoso")
+    @DisplayName("updateUserPassword - Successful change")
     void testUpdatePassword_Success() {
         UserPasswordDTO passwordDTO = UserPasswordDTO.builder()
                 .password("oldPassword")
@@ -270,22 +276,24 @@ class UserServiceImplTest {
     }
 
     /**
-     * Verifica que un usuario no propietario no puede cambiar la contrasena de otro usuario.
+     * Verifies that a non-owner user cannot change another user's password.
      */
     @Test
-    @DisplayName("updateUserPassword - No propietario")
+    @DisplayName("updateUserPassword - Not owner")
     void testUpdatePassword_NotOwner() {
-        doThrow(new CustomException(HttpStatus.FORBIDDEN, Constantes.MESSAGE_FORBIDDEN_ACCESS)).when(accessControlUtils).validateUserOwnership(2);
+        doThrow(new CustomException(HttpStatus.FORBIDDEN, Constantes.MESSAGE_FORBIDDEN_ACCESS)).when(accessControlUtils)
+                .validateUserOwnership(2);
 
-        CustomException ex = assertThrows(CustomException.class, () -> userService.updateUserPassword(2, UserPasswordDTO.builder().build()));
+        CustomException ex = assertThrows(CustomException.class,
+                () -> userService.updateUserPassword(2, UserPasswordDTO.builder().build()));
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
     }
 
     /**
-     * Verifica que proporcionar la contrasena actual incorrecta lanza BAD_REQUEST.
+     * Verifies that providing an incorrect current password throws BAD_REQUEST.
      */
     @Test
-    @DisplayName("updateUserPassword - Password actual incorrecta")
+    @DisplayName("updateUserPassword - Incorrect current password")
     void testUpdatePassword_WrongCurrentPassword() {
         UserPasswordDTO passwordDTO = UserPasswordDTO.builder()
                 .password("wrongOldPassword")
@@ -303,10 +311,11 @@ class UserServiceImplTest {
     }
 
     /**
-     * Verifica que si la nueva contrasena y su confirmacion no coinciden se lanza BAD_REQUEST.
+     * Verifies that BAD_REQUEST is thrown when the new password and confirmation do
+     * not match.
      */
     @Test
-    @DisplayName("updateUserPassword - Nuevas passwords no coinciden")
+    @DisplayName("updateUserPassword - New passwords do not match")
     void testUpdatePassword_PasswordsMismatch() {
         UserPasswordDTO passwordDTO = UserPasswordDTO.builder()
                 .password("oldPassword")
@@ -324,15 +333,17 @@ class UserServiceImplTest {
     }
 
     /**
-     * Verifica que intentar cambiar la contrasena de un usuario inexistente lanza BAD_REQUEST.
+     * Verifies that attempting to change the password of a non-existent user throws
+     * BAD_REQUEST.
      */
     @Test
-    @DisplayName("updateUserPassword - Usuario no encontrado")
+    @DisplayName("updateUserPassword - User not found")
     void testUpdatePassword_UserNotFound() {
         doNothing().when(accessControlUtils).validateUserOwnership(999);
         when(userRepository.findById(999)).thenReturn(Optional.empty());
 
-        CustomException ex = assertThrows(CustomException.class, () -> userService.updateUserPassword(999, UserPasswordDTO.builder().password("old").newPassword("new").newPasswordConfirm("new").build()));
+        CustomException ex = assertThrows(CustomException.class, () -> userService.updateUserPassword(999,
+                UserPasswordDTO.builder().password("old").newPassword("new").newPasswordConfirm("new").build()));
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
     }
 }

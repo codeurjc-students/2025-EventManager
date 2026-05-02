@@ -24,7 +24,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * Pruebas unitarias del controlador de usuarios. Cubre perfil autenticado, obtencion de usuario, actualizacion y cambio de contrasena.
+ * Unit tests for the user controller. Covers authenticated profile, user
+ * retrieval, updates, and password changes.
  */
 @WebMvcTest(UserController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -37,13 +38,13 @@ class UserControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-        @MockitoBean
+    @MockitoBean
     private UserService userService;
 
-        @MockitoBean
+    @MockitoBean
     private JwtTokenProvider jwtTokenProvider;
 
-        @MockitoBean
+    @MockitoBean
     private UserDetailsService userDetailsService;
 
     private UserDTO userDTO;
@@ -52,7 +53,7 @@ class UserControllerTest {
 
     @BeforeEach
     void setUp() {
-        // UserDTO de respuesta
+        // Response UserDTO
         userDTO = new UserDTO();
         userDTO.setUserId(1);
         userDTO.setEmail("carlos.martinez@eventmanager.es");
@@ -61,14 +62,14 @@ class UserControllerTest {
         userDTO.setLastName("Martinez");
         userDTO.setPhoneNumber("612345678");
 
-        // DTO para actualizar usuario
+        // DTO for user update
         userUpdateDTO = UserUpdateDTO.builder()
                 .firstName("Updated")
                 .lastName("Name")
                 .phoneNumber("698765432")
                 .build();
 
-        // DTO para cambiar contraseña
+        // DTO for password change
         userPasswordDTO = UserPasswordDTO.builder()
                 .password("ClaveAnterior2024")
                 .newPassword("ClaveNueva2025")
@@ -76,13 +77,13 @@ class UserControllerTest {
     }
 
     /**
-     * Verifica que se obtiene correctamente el perfil del usuario autenticado.
+     * Verifies that the authenticated user profile is retrieved correctly.
      */
     @Test
-    @DisplayName("Get Authenticated User Profile - Exitoso")
-        @WithMockUser(username = "carlos.martinez")
+    @DisplayName("Get Authenticated User Profile - Success")
+    @WithMockUser(username = "carlos.martinez")
     void testGetAuthenticatedUserProfile_Success() throws Exception {
-                when(userService.getUserInformationByUsername("carlos.martinez")).thenReturn(userDTO);
+        when(userService.getUserInformationByUsername("carlos.martinez")).thenReturn(userDTO);
 
         mockMvc.perform(get("/api/user/profile"))
                 .andExpect(status().isOk())
@@ -94,26 +95,26 @@ class UserControllerTest {
     }
 
     /**
-     * Verifica que la obtencion del perfil falla cuando el usuario no esta autenticado.
+     * Verifies that profile retrieval fails when the user is not authenticated.
      */
     @Test
-    @DisplayName("Get Authenticated User Profile - Usuario no autenticado")
+    @DisplayName("Get Authenticated User Profile - User not authenticated")
     void testGetAuthenticatedUserProfile_NotAuthenticated() throws Exception {
         mockMvc.perform(get("/api/user/profile"))
                 .andExpect(status().is5xxServerError());
     }
 
     /**
-     * Verifica que se obtiene correctamente un usuario por su username.
+     * Verifies that a user is retrieved correctly by username.
      */
     @Test
-    @DisplayName("Get User By Username - Exitoso")
+    @DisplayName("Get User By Username - Success")
     @WithMockUser
     void testGetUserByUsername_Success() throws Exception {
         when(userService.getUserInformationByUsername("carlos.martinez")).thenReturn(userDTO);
 
         mockMvc.perform(get("/api/user")
-                        .param("username", "carlos.martinez"))
+                .param("username", "carlos.martinez"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.username").value("carlos.martinez"))
                 .andExpect(jsonPath("$.email").value("carlos.martinez@eventmanager.es"));
@@ -122,26 +123,27 @@ class UserControllerTest {
     }
 
     /**
-     * Verifica que la busqueda por username falla cuando el usuario no existe.
+     * Verifies that lookup by username fails when the user does not exist.
      */
     @Test
-    @DisplayName("Get User By Username - Usuario no encontrado")
+    @DisplayName("Get User By Username - User not found")
     @WithMockUser
     void testGetUserByUsername_NotFound() throws Exception {
-        when(userService.getUserInformationByUsername("nonexistent")).thenThrow(new RuntimeException("User not found"));
+        when(userService.getUserInformationByUsername("nonexistent"))
+                .thenThrow(new RuntimeException("User not found"));
 
         mockMvc.perform(get("/api/user")
-                        .param("username", "nonexistent"))
+                .param("username", "nonexistent"))
                 .andExpect(status().is5xxServerError());
 
         verify(userService, times(1)).getUserInformationByUsername("nonexistent");
     }
 
     /**
-     * Verifica que la busqueda por username falla cuando no se proporciona el parametro.
+     * Verifies that lookup by username fails when the parameter is not provided.
      */
     @Test
-    @DisplayName("Get User By Username - Username null")
+    @DisplayName("Get User By Username - Username is null")
     @WithMockUser
     void testGetUserByUsername_NullUsername() throws Exception {
         mockMvc.perform(get("/api/user"))
@@ -149,10 +151,10 @@ class UserControllerTest {
     }
 
     /**
-     * Verifica que se obtiene correctamente un usuario por su identificador.
+     * Verifies that a user is retrieved correctly by ID.
      */
     @Test
-    @DisplayName("Get User By ID - Exitoso")
+    @DisplayName("Get User By ID - Success")
     @WithMockUser
     void testGetUserById_Success() throws Exception {
         when(userService.getUserInformation(1)).thenReturn(userDTO);
@@ -166,10 +168,10 @@ class UserControllerTest {
     }
 
     /**
-     * Verifica que la busqueda por identificador falla cuando el usuario no existe.
+     * Verifies that lookup by ID fails when the user does not exist.
      */
     @Test
-    @DisplayName("Get User By ID - Usuario no encontrado")
+    @DisplayName("Get User By ID - User not found")
     @WithMockUser
     void testGetUserById_NotFound() throws Exception {
         when(userService.getUserInformation(999)).thenThrow(new RuntimeException("User not found"));
@@ -181,10 +183,10 @@ class UserControllerTest {
     }
 
     /**
-     * Verifica que la busqueda por identificador falla cuando se proporciona un ID negativo.
+     * Verifies that lookup by ID fails when a negative ID is provided.
      */
     @Test
-    @DisplayName("Get User By ID - ID inválido (negativo)")
+    @DisplayName("Get User By ID - Invalid ID (negative)")
     @WithMockUser
     void testGetUserById_InvalidId() throws Exception {
         when(userService.getUserInformation(-1)).thenThrow(new RuntimeException("Invalid user ID"));
@@ -196,10 +198,10 @@ class UserControllerTest {
     }
 
     /**
-     * Verifica que la actualizacion de un usuario funciona correctamente con datos validos.
+     * Verifies that user update works correctly with valid data.
      */
     @Test
-    @DisplayName("Update User - Actualización exitosa")
+    @DisplayName("Update User - Successful update")
     @WithMockUser
     void testUpdateUser_Success() throws Exception {
         UserDTO updatedUserDTO = new UserDTO();
@@ -211,8 +213,8 @@ class UserControllerTest {
         when(userService.updateUser(eq(1), any(UserUpdateDTO.class))).thenReturn(updatedUserDTO);
 
         mockMvc.perform(put("/api/user/{userId}", 1)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(userUpdateDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(userUpdateDTO)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.userId").value(1))
                 .andExpect(jsonPath("$.firstName").value("Updated"))
@@ -222,46 +224,47 @@ class UserControllerTest {
     }
 
     /**
-     * Verifica que la actualizacion falla cuando el usuario no existe.
+     * Verifies that update fails when the user does not exist.
      */
     @Test
-    @DisplayName("Update User - Usuario no encontrado")
+    @DisplayName("Update User - User not found")
     @WithMockUser
     void testUpdateUser_NotFound() throws Exception {
-        when(userService.updateUser(eq(999), any(UserUpdateDTO.class))).thenThrow(new RuntimeException("User not found"));
+        when(userService.updateUser(eq(999), any(UserUpdateDTO.class)))
+                .thenThrow(new RuntimeException("User not found"));
 
         mockMvc.perform(put("/api/user/{userId}", 999)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(userUpdateDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(userUpdateDTO)))
                 .andExpect(status().is5xxServerError());
 
         verify(userService, times(1)).updateUser(eq(999), any(UserUpdateDTO.class));
     }
 
     /**
-     * Verifica que la actualizacion se rechaza cuando el nombre es demasiado largo.
+     * Verifies that update is rejected when the first name is too long.
      */
     @Test
-    @DisplayName("Update User - Datos inválidos (firstName demasiado largo)")
+    @DisplayName("Update User - Invalid data (first name too long)")
     @WithMockUser
     void testUpdateUser_InvalidData() throws Exception {
         UserUpdateDTO invalidDTO = UserUpdateDTO.builder()
-                .firstName("A".repeat(25))  // > 20 caracteres
+                .firstName("A".repeat(25)) // > 20 characters
                 .lastName("User")
                 .phoneNumber("612345678")
                 .build();
 
         mockMvc.perform(put("/api/user/{userId}", 1)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidDTO)))
                 .andExpect(status().isBadRequest());
     }
 
     /**
-     * Verifica el comportamiento de la actualizacion cuando los campos estan vacios.
+     * Verifies update behavior when fields are empty.
      */
     @Test
-    @DisplayName("Update User - Campos vacíos")
+    @DisplayName("Update User - Empty fields")
     @WithMockUser
     void testUpdateUser_EmptyFields() throws Exception {
         UserUpdateDTO emptyDTO = UserUpdateDTO.builder()
@@ -271,16 +274,16 @@ class UserControllerTest {
                 .build();
 
         mockMvc.perform(put("/api/user/{userId}", 1)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(emptyDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(emptyDTO)))
                 .andExpect(status().isOk());
     }
 
     /**
-     * Verifica que la actualizacion falla cuando el formato del numero de telefono es invalido.
+     * Verifies that update fails when the phone number format is invalid.
      */
     @Test
-    @DisplayName("Update User - Número de teléfono inválido")
+    @DisplayName("Update User - Invalid phone number")
     @WithMockUser
     void testUpdateUser_InvalidPhoneNumber() throws Exception {
         UserUpdateDTO invalidPhoneDTO = UserUpdateDTO.builder()
@@ -289,26 +292,27 @@ class UserControllerTest {
                 .phoneNumber("invalid-phone")
                 .build();
 
-        when(userService.updateUser(eq(1), any(UserUpdateDTO.class))).thenThrow(new RuntimeException("Invalid phone number format"));
+        when(userService.updateUser(eq(1), any(UserUpdateDTO.class)))
+                .thenThrow(new RuntimeException("Invalid phone number format"));
 
         mockMvc.perform(put("/api/user/{userId}", 1)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidPhoneDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidPhoneDTO)))
                 .andExpect(status().is5xxServerError());
     }
 
     /**
-     * Verifica que el cambio de contrasena funciona correctamente con datos validos.
+     * Verifies that password change works correctly with valid data.
      */
     @Test
-    @DisplayName("Update Password - Cambio exitoso")
+    @DisplayName("Update Password - Successful change")
     @WithMockUser
     void testUpdatePassword_Success() throws Exception {
         when(userService.updateUserPassword(eq(1), any(UserPasswordDTO.class))).thenReturn(userDTO);
 
         mockMvc.perform(put("/api/user/{userId}/change-password", 1)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(userPasswordDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(userPasswordDTO)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.userId").value(1));
 
@@ -316,63 +320,65 @@ class UserControllerTest {
     }
 
     /**
-     * Verifica que el cambio de contrasena falla cuando la contrasena antigua es incorrecta.
+     * Verifies that password change fails when the old password is incorrect.
      */
     @Test
-    @DisplayName("Update Password - Contraseña antigua incorrecta")
+    @DisplayName("Update Password - Incorrect old password")
     @WithMockUser
     void testUpdatePassword_WrongOldPassword() throws Exception {
-        when(userService.updateUserPassword(eq(1), any(UserPasswordDTO.class))).thenThrow(new RuntimeException("Old password is incorrect"));
+        when(userService.updateUserPassword(eq(1), any(UserPasswordDTO.class)))
+                .thenThrow(new RuntimeException("Old password is incorrect"));
 
         mockMvc.perform(put("/api/user/{userId}/change-password", 1)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(userPasswordDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(userPasswordDTO)))
                 .andExpect(status().is5xxServerError());
 
         verify(userService, times(1)).updateUserPassword(eq(1), any(UserPasswordDTO.class));
     }
 
     /**
-     * Verifica el comportamiento del cambio de contrasena cuando la nueva es demasiado corta.
+     * Verifies password change behavior when the new password is too short.
      */
     @Test
-    @DisplayName("Update Password - Nueva contraseña demasiado corta")
+    @DisplayName("Update Password - New password too short")
     @WithMockUser
     void testUpdatePassword_NewPasswordTooShort() throws Exception {
         UserPasswordDTO shortPasswordDTO = UserPasswordDTO.builder()
                 .password("ClaveAnterior2024")
-                .newPassword("123")  // Muy corta
+                .newPassword("123") // Too short
                 .build();
 
         mockMvc.perform(put("/api/user/{userId}/change-password", 1)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(shortPasswordDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(shortPasswordDTO)))
                 .andExpect(status().isOk());
     }
 
     /**
-     * Verifica que se rechaza el cambio de contrasena cuando la nueva excede los 25 caracteres.
+     * Verifies that password change is rejected when the new password exceeds 25
+     * characters.
      */
     @Test
-    @DisplayName("Update Password - Nueva contraseña demasiado larga")
+    @DisplayName("Update Password - New password too long")
     @WithMockUser
     void testUpdatePassword_NewPasswordTooLong() throws Exception {
         UserPasswordDTO longPasswordDTO = UserPasswordDTO.builder()
                 .password("ClaveAnterior2024")
-                .newPassword("A".repeat(30))  // > 25 caracteres
+                .newPassword("A".repeat(30)) // > 25 characters
                 .build();
 
         mockMvc.perform(put("/api/user/{userId}/change-password", 1)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(longPasswordDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(longPasswordDTO)))
                 .andExpect(status().isBadRequest());
     }
 
     /**
-     * Verifica el comportamiento del cambio de contrasena cuando los campos son null.
+     * Verifies password change behavior when fields are null.
      */
     @Test
-    @DisplayName("Update Password - Campos null")
+    @DisplayName("Update Password - Fields are null")
     @WithMockUser
     void testUpdatePassword_NullFields() throws Exception {
         UserPasswordDTO nullFieldsDTO = UserPasswordDTO.builder()
@@ -381,16 +387,17 @@ class UserControllerTest {
                 .build();
 
         mockMvc.perform(put("/api/user/{userId}/change-password", 1)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(nullFieldsDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(nullFieldsDTO)))
                 .andExpect(status().isOk());
     }
 
     /**
-     * Verifica que el cambio de contrasena falla cuando la nueva es igual a la antigua.
+     * Verifies that password change fails when the new password is the same as the
+     * old one.
      */
     @Test
-    @DisplayName("Update Password - Nueva contraseña igual a la antigua")
+    @DisplayName("Update Password - New password same as old")
     @WithMockUser
     void testUpdatePassword_SameAsOldPassword() throws Exception {
         UserPasswordDTO samePasswordDTO = UserPasswordDTO.builder()
@@ -398,26 +405,28 @@ class UserControllerTest {
                 .newPassword("ClaveSegura2025")
                 .build();
 
-        when(userService.updateUserPassword(eq(1), any(UserPasswordDTO.class))).thenThrow(new RuntimeException("New password must be different from old password"));
+        when(userService.updateUserPassword(eq(1), any(UserPasswordDTO.class)))
+                .thenThrow(new RuntimeException("New password must be different from old password"));
 
         mockMvc.perform(put("/api/user/{userId}/change-password", 1)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(samePasswordDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(samePasswordDTO)))
                 .andExpect(status().is5xxServerError());
     }
 
     /**
-     * Verifica que el cambio de contrasena falla cuando el usuario no existe.
+     * Verifies that password change fails when the user does not exist.
      */
     @Test
-    @DisplayName("Update Password - Usuario no encontrado")
+    @DisplayName("Update Password - User not found")
     @WithMockUser
     void testUpdatePassword_UserNotFound() throws Exception {
-        when(userService.updateUserPassword(eq(999), any(UserPasswordDTO.class))).thenThrow(new RuntimeException("User not found"));
+        when(userService.updateUserPassword(eq(999), any(UserPasswordDTO.class)))
+                .thenThrow(new RuntimeException("User not found"));
 
         mockMvc.perform(put("/api/user/{userId}/change-password", 999)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(userPasswordDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(userPasswordDTO)))
                 .andExpect(status().is5xxServerError());
 
         verify(userService, times(1)).updateUserPassword(eq(999), any(UserPasswordDTO.class));

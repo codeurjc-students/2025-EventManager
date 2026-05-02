@@ -27,10 +27,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * Pruebas unitarias del controlador de autenticacion. Cubre registro, login, refresco de token, logout y recuperacion de contrasena.
+ * Unit tests for the authentication controller. Covers registration, login,
+ * token refresh, logout, and password recovery.
  */
 @WebMvcTest(AuthController.class)
-@AutoConfigureMockMvc(addFilters = false) // Deshabilitamos filtros de seguridad para tests
+@AutoConfigureMockMvc(addFilters = false) // Disable security filters for tests.
 @DisplayName("AuthController Tests")
 class AuthControllerTest {
 
@@ -40,13 +41,13 @@ class AuthControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-        @MockitoBean
+    @MockitoBean
     private AuthService authService;
 
-        @MockitoBean
+    @MockitoBean
     private JwtTokenProvider jwtTokenProvider;
 
-        @MockitoBean
+    @MockitoBean
     private UserDetailsService userDetailsService;
 
     private UserCreateDTO validUserCreateDTO;
@@ -55,7 +56,7 @@ class AuthControllerTest {
 
     @BeforeEach
     void setUp() {
-        // Usuario válido para registro
+        // Valid user for registration
         validUserCreateDTO = UserCreateDTO.builder()
                 .email("carlos.martinez@eventmanager.es")
                 .password("ClaveSegura2025")
@@ -65,13 +66,13 @@ class AuthControllerTest {
                 .phoneNumber("612345678")
                 .build();
 
-        // Respuesta de autenticación simulada
+        // Mock authentication response
         authResponse = AuthResponse.builder()
                 .status(AuthResponse.Status.SUCCESS)
                 .message("Success")
                 .build();
 
-        // Login request válido
+        // Valid login request
         validLoginRequest = LoginRequest.builder()
                 .username("carlos.martinez")
                 .password("ClaveSegura2025")
@@ -79,16 +80,17 @@ class AuthControllerTest {
     }
 
     /**
-     * Verifica que el registro funciona correctamente con datos validos.
+     * Verifies that registration works correctly with valid data.
      */
     @Test
-    @DisplayName("Register - Registro exitoso con datos válidos")
+    @DisplayName("Register - Successful registration with valid data")
     void testRegister_Success() throws Exception {
-        when(authService.registerUser(any(UserCreateDTO.class), any(HttpServletResponse.class))).thenReturn(authResponse);
+        when(authService.registerUser(any(UserCreateDTO.class), any(HttpServletResponse.class)))
+                .thenReturn(authResponse);
 
         mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(validUserCreateDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(validUserCreateDTO)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.message").value(authResponse.getMessage()));
@@ -97,29 +99,31 @@ class AuthControllerTest {
     }
 
     /**
-     * Verifica que el registro falla cuando el email ya esta registrado en el sistema.
+     * Verifies that registration fails when the email is already registered in the
+     * system.
      */
     @Test
-    @DisplayName("Register - Email ya existe en el sistema")
+    @DisplayName("Register - Email already exists in the system")
     void testRegister_EmailAlreadyExists() throws Exception {
-        when(authService.registerUser(any(UserCreateDTO.class), any(HttpServletResponse.class))).thenThrow(new RuntimeException("El email ya está registrado"));
+        when(authService.registerUser(any(UserCreateDTO.class), any(HttpServletResponse.class)))
+                .thenThrow(new RuntimeException("El email ya está registrado"));
 
         mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(validUserCreateDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(validUserCreateDTO)))
                 .andExpect(status().is5xxServerError());
 
         verify(authService, times(1)).registerUser(any(UserCreateDTO.class), any(HttpServletResponse.class));
     }
 
     /**
-     * Verifica el comportamiento del registro cuando se proporciona un email con formato invalido.
+     * Verifies registration behavior when an email with invalid format is provided.
      */
     @Test
-    @DisplayName("Register - Email con formato inválido")
+    @DisplayName("Register - Invalid email format")
     void testRegister_InvalidEmailFormat() throws Exception {
         UserCreateDTO invalidEmailDTO = UserCreateDTO.builder()
-                .email("invalid-email")  // Email sin @ y dominio
+                .email("invalid-email") // Email without @ and domain
                 .password("password123")
                 .username("testuser")
                 .firstName("Test")
@@ -128,19 +132,20 @@ class AuthControllerTest {
                 .build();
 
         mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalidEmailDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalidEmailDTO)))
                 .andExpect(status().isOk());
     }
 
     /**
-     * Verifica que se rechaza el registro cuando el email excede la longitud maxima de 50 caracteres.
+     * Verifies that registration is rejected when the email exceeds the maximum
+     * length of 50 characters.
      */
     @Test
-    @DisplayName("Register - Email excede longitud máxima (>50 caracteres)")
+    @DisplayName("Register - Email exceeds max length (>50 characters)")
     void testRegister_EmailTooLong() throws Exception {
         UserCreateDTO longEmailDTO = UserCreateDTO.builder()
-                .email("a".repeat(45) + "@test.com")  // Email > 50 caracteres
+                .email("a".repeat(45) + "@test.com") // Email > 50 characters
                 .password("password123")
                 .username("testuser")
                 .firstName("Test")
@@ -149,20 +154,21 @@ class AuthControllerTest {
                 .build();
 
         mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(longEmailDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(longEmailDTO)))
                 .andExpect(status().isBadRequest());
     }
 
     /**
-     * Verifica que se rechaza el registro cuando la contrasena excede la longitud maxima de 25 caracteres.
+     * Verifies that registration is rejected when the password exceeds the maximum
+     * length of 25 characters.
      */
     @Test
-    @DisplayName("Register - Password excede longitud máxima (>25 caracteres)")
+    @DisplayName("Register - Password exceeds max length (>25 characters)")
     void testRegister_PasswordTooLong() throws Exception {
         UserCreateDTO longPasswordDTO = UserCreateDTO.builder()
                 .email("test@example.com")
-                .password("a".repeat(30))  // Password > 25 caracteres
+                .password("a".repeat(30)) // Password > 25 characters
                 .username("testuser")
                 .firstName("Test")
                 .lastName("User")
@@ -170,79 +176,82 @@ class AuthControllerTest {
                 .build();
 
         mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(longPasswordDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(longPasswordDTO)))
                 .andExpect(status().isBadRequest());
     }
 
     /**
-     * Verifica que se rechaza el registro cuando el username excede la longitud maxima de 25 caracteres.
+     * Verifies that registration is rejected when the username exceeds the maximum
+     * length of 25 characters.
      */
     @Test
-    @DisplayName("Register - Username excede longitud máxima (>25 caracteres)")
+    @DisplayName("Register - Username exceeds max length (>25 characters)")
     void testRegister_UsernameTooLong() throws Exception {
         UserCreateDTO longUsernameDTO = UserCreateDTO.builder()
                 .email("test@example.com")
                 .password("password123")
-                .username("a".repeat(30))  // Username > 25 caracteres
+                .username("a".repeat(30)) // Username > 25 characters
                 .firstName("Test")
                 .lastName("User")
                 .phoneNumber("123456789")
                 .build();
 
         mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(longUsernameDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(longUsernameDTO)))
                 .andExpect(status().isBadRequest());
     }
 
     /**
-     * Verifica que se rechaza el registro cuando el nombre excede la longitud maxima de 20 caracteres.
+     * Verifies that registration is rejected when the first name exceeds the
+     * maximum length of 20 characters.
      */
     @Test
-    @DisplayName("Register - FirstName excede longitud máxima (>20 caracteres)")
+    @DisplayName("Register - First name exceeds max length (>20 characters)")
     void testRegister_FirstNameTooLong() throws Exception {
         UserCreateDTO longFirstNameDTO = UserCreateDTO.builder()
                 .email("test@example.com")
                 .password("password123")
                 .username("testuser")
-                .firstName("a".repeat(25))  // FirstName > 20 caracteres
+                .firstName("a".repeat(25)) // FirstName > 20 characters
                 .lastName("User")
                 .phoneNumber("123456789")
                 .build();
 
         mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(longFirstNameDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(longFirstNameDTO)))
                 .andExpect(status().isBadRequest());
     }
 
     /**
-     * Verifica que se rechaza el registro cuando el apellido excede la longitud maxima de 50 caracteres.
+     * Verifies that registration is rejected when the last name exceeds the maximum
+     * length of 50 characters.
      */
     @Test
-    @DisplayName("Register - LastName excede longitud máxima (>50 caracteres)")
+    @DisplayName("Register - Last name exceeds max length (>50 characters)")
     void testRegister_LastNameTooLong() throws Exception {
         UserCreateDTO longLastNameDTO = UserCreateDTO.builder()
                 .email("test@example.com")
                 .password("password123")
                 .username("testuser")
                 .firstName("Test")
-                .lastName("a".repeat(55))  // LastName > 50 caracteres
+                .lastName("a".repeat(55)) // LastName > 50 characters
                 .phoneNumber("123456789")
                 .build();
 
         mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(longLastNameDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(longLastNameDTO)))
                 .andExpect(status().isBadRequest());
     }
 
     /**
-     * Verifica que se rechaza el registro cuando los campos obligatorios son null.
+     * Verifies that registration is rejected when required fields are null.
      */
     @Test
-    @DisplayName("Register - Campos obligatorios null")
+    @DisplayName("Register - Required fields are null")
     void testRegister_RequiredFieldsNull() throws Exception {
         UserCreateDTO nullFieldsDTO = UserCreateDTO.builder()
                 .email(null)
@@ -254,16 +263,16 @@ class AuthControllerTest {
                 .build();
 
         mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(nullFieldsDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(nullFieldsDTO)))
                 .andExpect(status().isBadRequest());
     }
 
     /**
-     * Verifica el comportamiento del registro cuando los campos obligatorios estan vacios.
+     * Verifies registration behavior when required fields are empty.
      */
     @Test
-    @DisplayName("Register - Campos obligatorios vacíos")
+    @DisplayName("Register - Required fields are empty")
     void testRegister_RequiredFieldsEmpty() throws Exception {
         UserCreateDTO emptyFieldsDTO = UserCreateDTO.builder()
                 .email("")
@@ -275,22 +284,23 @@ class AuthControllerTest {
                 .build();
 
         mockMvc.perform(post("/api/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(emptyFieldsDTO)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(emptyFieldsDTO)))
                 .andExpect(status().isOk());
     }
 
     /**
-     * Verifica que el login responde correctamente con credenciales validas.
+     * Verifies that login responds correctly with valid credentials.
      */
     @Test
-    @DisplayName("Login - Login exitoso con credenciales válidas")
+    @DisplayName("Login - Successful login with valid credentials")
     void testLogin_Success() throws Exception {
-        when(authService.login(any(LoginRequest.class), any(HttpServletResponse.class))).thenReturn(authResponse);
+        when(authService.login(any(LoginRequest.class), any(HttpServletResponse.class)))
+                .thenReturn(authResponse);
 
         mockMvc.perform(post("/api/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(validLoginRequest)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(validLoginRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"))
                 .andExpect(jsonPath("$.message").value("Success"));
@@ -299,74 +309,78 @@ class AuthControllerTest {
     }
 
     /**
-     * Verifica que el login rechaza credenciales incorrectas con error de cliente.
+     * Verifies that login rejects invalid credentials with a client error.
      */
     @Test
-    @DisplayName("Login - Credenciales incorrectas")
+    @DisplayName("Login - Invalid credentials")
     void testLogin_InvalidCredentials() throws Exception {
-        when(authService.login(any(LoginRequest.class), any(HttpServletResponse.class))).thenThrow(new BadCredentialsException("Invalid credentials"));
+        when(authService.login(any(LoginRequest.class), any(HttpServletResponse.class)))
+                .thenThrow(new BadCredentialsException("Invalid credentials"));
 
         mockMvc.perform(post("/api/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(validLoginRequest)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(validLoginRequest)))
                 .andExpect(status().is4xxClientError());
 
         verify(authService, times(1)).login(any(LoginRequest.class), any(HttpServletResponse.class));
     }
 
     /**
-     * Verifica que el login falla cuando el usuario no existe en el sistema.
+     * Verifies that login fails when the user does not exist in the system.
      */
     @Test
-    @DisplayName("Login - Usuario no existe")
+    @DisplayName("Login - User does not exist")
     void testLogin_UserNotFound() throws Exception {
         LoginRequest nonExistentUserRequest = LoginRequest.builder()
                 .username("nonexistentuser")
                 .password("password123")
                 .build();
 
-        when(authService.login(any(LoginRequest.class), any(HttpServletResponse.class))).thenThrow(new BadCredentialsException("User not found"));
+        when(authService.login(any(LoginRequest.class), any(HttpServletResponse.class)))
+                .thenThrow(new BadCredentialsException("User not found"));
 
         mockMvc.perform(post("/api/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(nonExistentUserRequest)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(nonExistentUserRequest)))
                 .andExpect(status().is4xxClientError());
 
         verify(authService, times(1)).login(any(LoginRequest.class), any(HttpServletResponse.class));
     }
 
     /**
-     * Verifica que el login falla cuando la contrasena proporcionada es incorrecta.
+     * Verifies that login fails when the provided password is incorrect.
      */
     @Test
-    @DisplayName("Login - Password incorrecto")
+    @DisplayName("Login - Incorrect password")
     void testLogin_WrongPassword() throws Exception {
         LoginRequest wrongPasswordRequest = LoginRequest.builder()
                 .username("carlos.martinez")
                 .password("ClaveIncorrecta2025")
                 .build();
 
-        when(authService.login(any(LoginRequest.class), any(HttpServletResponse.class))).thenThrow(new BadCredentialsException("Invalid password"));
+        when(authService.login(any(LoginRequest.class), any(HttpServletResponse.class)))
+                .thenThrow(new BadCredentialsException("Invalid password"));
 
         mockMvc.perform(post("/api/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(wrongPasswordRequest)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(wrongPasswordRequest)))
                 .andExpect(status().is4xxClientError());
 
         verify(authService, times(1)).login(any(LoginRequest.class), any(HttpServletResponse.class));
     }
 
     /**
-     * Verifica que el refresco de token funciona correctamente con un token valido.
+     * Verifies that token refresh works correctly with a valid token.
      */
     @Test
-    @DisplayName("Refresh Token - Refresh exitoso con token válido")
+    @DisplayName("Refresh Token - Successful refresh with valid token")
     void testRefreshToken_Success() throws Exception {
         String refreshToken = "valid-refresh-token";
-        when(authService.refreshToken(eq(refreshToken), any(HttpServletResponse.class))).thenReturn(authResponse);
+        when(authService.refreshToken(eq(refreshToken), any(HttpServletResponse.class)))
+                .thenReturn(authResponse);
 
         mockMvc.perform(post("/api/auth/refresh")
-                        .cookie(new Cookie("RefreshToken", refreshToken)))
+                .cookie(new Cookie("RefreshToken", refreshToken)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("SUCCESS"));
 
@@ -374,12 +388,13 @@ class AuthControllerTest {
     }
 
     /**
-     * Verifica que el refresco de token falla cuando no se proporciona token en la cookie.
+     * Verifies that token refresh fails when no token is provided in the cookie.
      */
     @Test
-    @DisplayName("Refresh Token - Sin token de refresh en cookie")
+    @DisplayName("Refresh Token - Missing refresh token cookie")
     void testRefreshToken_NoToken() throws Exception {
-        when(authService.refreshToken(isNull(), any(HttpServletResponse.class))).thenThrow(new RuntimeException("Refresh token not provided"));
+        when(authService.refreshToken(isNull(), any(HttpServletResponse.class)))
+                .thenThrow(new RuntimeException("Refresh token not provided"));
 
         mockMvc.perform(post("/api/auth/refresh"))
                 .andExpect(status().is5xxServerError());
@@ -388,26 +403,27 @@ class AuthControllerTest {
     }
 
     /**
-     * Verifica que el refresco de token falla cuando el token ha expirado.
+     * Verifies that token refresh fails when the token has expired.
      */
     @Test
-    @DisplayName("Refresh Token - Token expirado")
+    @DisplayName("Refresh Token - Token expired")
     void testRefreshToken_ExpiredToken() throws Exception {
         String expiredToken = "expired-refresh-token";
-        when(authService.refreshToken(eq(expiredToken), any(HttpServletResponse.class))).thenThrow(new RuntimeException("Refresh token expired"));
+        when(authService.refreshToken(eq(expiredToken), any(HttpServletResponse.class)))
+                .thenThrow(new RuntimeException("Refresh token expired"));
 
         mockMvc.perform(post("/api/auth/refresh")
-                        .cookie(new Cookie("RefreshToken", expiredToken)))
+                .cookie(new Cookie("RefreshToken", expiredToken)))
                 .andExpect(status().is5xxServerError());
 
         verify(authService, times(1)).refreshToken(eq(expiredToken), any(HttpServletResponse.class));
     }
 
     /**
-     * Verifica que el cierre de sesion se realiza correctamente.
+     * Verifies that logout is performed correctly.
      */
     @Test
-    @DisplayName("Logout - Logout exitoso")
+    @DisplayName("Logout - Successful logout")
     void testLogout_Success() throws Exception {
         AuthResponse logoutResponse = AuthResponse.builder()
                 .message("Logout successful")
@@ -423,51 +439,54 @@ class AuthControllerTest {
     }
 
     /**
-     * Verifica el flujo de cambio de contrasena olvidada con datos validos.
+     * Verifies the forgotten password flow with valid data.
      */
     @Test
-    @DisplayName("Forgot Password - Cambio exitoso de contraseña olvidada")
+    @DisplayName("Forgot Password - Successful forgotten password change")
     void testForgotPassword_Success() throws Exception {
         eventManager.dto.UserDTO userDTO = new eventManager.dto.UserDTO();
         when(authService.changeForgottenPassword(any(UserForgottenPassword.class))).thenReturn(userDTO);
 
         mockMvc.perform(post("/api/auth/forgot-password")
-                        .param("email", "carlos.martinez@eventmanager.es")
-                        .param("username", "carlos.martinez")
-                        .param("newPassword", "ClaveNueva2025")
-                        .param("newPasswordConfirm", "ClaveNueva2025"))
+                .param("email", "carlos.martinez@eventmanager.es")
+                .param("username", "carlos.martinez")
+                .param("newPassword", "ClaveNueva2025")
+                .param("newPasswordConfirm", "ClaveNueva2025"))
                 .andExpect(status().is5xxServerError());
     }
 
     /**
-     * Verifica que el cambio de contrasena falla cuando el email no existe en el sistema.
+     * Verifies that password change fails when the email does not exist in the
+     * system.
      */
     @Test
-    @DisplayName("Forgot Password - Email no existe")
+    @DisplayName("Forgot Password - Email does not exist")
     void testForgotPassword_EmailNotFound() throws Exception {
-        when(authService.changeForgottenPassword(any(UserForgottenPassword.class))).thenThrow(new RuntimeException("Email not found"));
+        when(authService.changeForgottenPassword(any(UserForgottenPassword.class)))
+                .thenThrow(new RuntimeException("Email not found"));
 
         mockMvc.perform(post("/api/auth/forgot-password")
-                        .param("email", "laura.sanchez@eventmanager.es")
-                        .param("username", "carlos.martinez")
-                        .param("newPassword", "ClaveNueva2025")
-                        .param("newPasswordConfirm", "ClaveNueva2025"))
+                .param("email", "laura.sanchez@eventmanager.es")
+                .param("username", "carlos.martinez")
+                .param("newPassword", "ClaveNueva2025")
+                .param("newPasswordConfirm", "ClaveNueva2025"))
                 .andExpect(status().is5xxServerError());
     }
 
     /**
-     * Verifica que el cambio de contrasena falla cuando la nueva contrasena es demasiado corta.
+     * Verifies that password change fails when the new password is too short.
      */
     @Test
-    @DisplayName("Forgot Password - Nueva contraseña inválida (demasiado corta)")
+    @DisplayName("Forgot Password - New password invalid (too short)")
     void testForgotPassword_InvalidNewPassword() throws Exception {
-        when(authService.changeForgottenPassword(any(UserForgottenPassword.class))).thenThrow(new RuntimeException("Invalid new password"));
+        when(authService.changeForgottenPassword(any(UserForgottenPassword.class)))
+                .thenThrow(new RuntimeException("Invalid new password"));
 
         mockMvc.perform(post("/api/auth/forgot-password")
-                        .param("email", "carlos.martinez@eventmanager.es")
-                        .param("username", "carlos.martinez")
-                        .param("newPassword", "123")
-                        .param("newPasswordConfirm", "123"))
+                .param("email", "carlos.martinez@eventmanager.es")
+                .param("username", "carlos.martinez")
+                .param("newPassword", "123")
+                .param("newPasswordConfirm", "123"))
                 .andExpect(status().is5xxServerError());
     }
 }

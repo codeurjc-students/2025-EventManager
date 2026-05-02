@@ -16,7 +16,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Tests unitarios para GlobalExceptionHandler, que gestiona de forma centralizada las excepciones lanzadas por los controladores REST de la aplicacion.
+ * Unit tests for GlobalExceptionHandler, which centrally handles exceptions
+ * thrown by REST controllers.
  */
 @DisplayName("GlobalExceptionHandler Tests")
 class GlobalExceptionHandlerTest {
@@ -35,7 +36,8 @@ class GlobalExceptionHandlerTest {
     }
 
     /**
-     * Verifica que una CustomException con BAD_REQUEST devuelve estado 400 y el mensaje correcto.
+     * Verifies that a CustomException with BAD_REQUEST returns status 400 and the
+     * correct message.
      */
     @Test
     @DisplayName("handleCustomException - BAD_REQUEST")
@@ -49,7 +51,8 @@ class GlobalExceptionHandlerTest {
     }
 
     /**
-     * Verifica que una CustomException con NOT_FOUND devuelve estado 404 y el mensaje correcto.
+     * Verifies that a CustomException with NOT_FOUND returns status 404 and the
+     * correct message.
      */
     @Test
     @DisplayName("handleCustomException - NOT_FOUND")
@@ -63,7 +66,7 @@ class GlobalExceptionHandlerTest {
     }
 
     /**
-     * Verifica que una CustomException con FORBIDDEN devuelve estado 403.
+     * Verifies that a CustomException with FORBIDDEN returns status 403.
      */
     @Test
     @DisplayName("handleCustomException - FORBIDDEN")
@@ -76,7 +79,8 @@ class GlobalExceptionHandlerTest {
     }
 
     /**
-     * Verifica que una CustomException con INTERNAL_SERVER_ERROR devuelve estado 500.
+     * Verifies that a CustomException with INTERNAL_SERVER_ERROR returns status
+     * 500.
      */
     @Test
     @DisplayName("handleCustomException - INTERNAL_SERVER_ERROR")
@@ -89,10 +93,10 @@ class GlobalExceptionHandlerTest {
     }
 
     /**
-     * Verifica que una excepcion de credenciales incorrectas devuelve estado 401.
+     * Verifies that a bad credentials exception returns status 401.
      */
     @Test
-    @DisplayName("handleBadCredentialsException - Devuelve 401")
+    @DisplayName("handleBadCredentialsException - Returns 401")
     void testHandleBadCredentialsException() {
         BadCredentialsException ex = new BadCredentialsException("Bad credentials");
         ResponseEntity<ErrorResponse> response = handler.handleBadCredentialsException(ex);
@@ -103,10 +107,11 @@ class GlobalExceptionHandlerTest {
     }
 
     /**
-     * Verifica que un error de validacion en el campo eventCode devuelve el mensaje apropiado.
+     * Verifies that a validation error on the eventCode field returns the
+     * appropriate message.
      */
     @Test
-    @DisplayName("handleValidationExceptions - campo eventCode")
+    @DisplayName("handleValidationExceptions - EventCode field")
     void testHandleValidationExceptions_EventCodeField() {
         MethodArgumentNotValidException ex = mock(MethodArgumentNotValidException.class);
         BindingResult bindingResult = mock(BindingResult.class);
@@ -121,10 +126,11 @@ class GlobalExceptionHandlerTest {
     }
 
     /**
-     * Verifica que un error de validacion en el campo notes devuelve el mensaje apropiado.
+     * Verifies that a validation error on the notes field returns the appropriate
+     * message.
      */
     @Test
-    @DisplayName("handleValidationExceptions - campo notes")
+    @DisplayName("handleValidationExceptions - Notes field")
     void testHandleValidationExceptions_NotesField() {
         MethodArgumentNotValidException ex = mock(MethodArgumentNotValidException.class);
         BindingResult bindingResult = mock(BindingResult.class);
@@ -139,10 +145,11 @@ class GlobalExceptionHandlerTest {
     }
 
     /**
-     * Verifica que un error de validacion en un campo generico devuelve el mensaje por defecto.
+     * Verifies that a validation error on a generic field returns the default
+     * message.
      */
     @Test
-    @DisplayName("handleValidationExceptions - otro campo genérico")
+    @DisplayName("handleValidationExceptions - Other generic field")
     void testHandleValidationExceptions_OtherField() {
         MethodArgumentNotValidException ex = mock(MethodArgumentNotValidException.class);
         BindingResult bindingResult = mock(BindingResult.class);
@@ -157,10 +164,11 @@ class GlobalExceptionHandlerTest {
     }
 
     /**
-     * Verifica que una excepcion generica no controlada devuelve estado 500 con mensaje por defecto.
+     * Verifies that an unhandled generic exception returns status 500 with the
+     * default message.
      */
     @Test
-    @DisplayName("handleGenericException - Devuelve 500")
+    @DisplayName("handleGenericException - Returns 500")
     void testHandleGenericException() {
         RuntimeException ex = new RuntimeException("Unexpected error");
         ResponseEntity<ErrorResponse> response = handler.handleGenericException(ex);

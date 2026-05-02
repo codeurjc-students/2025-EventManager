@@ -38,7 +38,8 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Pruebas unitarias del servicio de autenticacion, incluyendo registro, login, refresco de token, logout y cambio de contrasena olvidada.
+ * Unit tests for the authentication service, including registration, login,
+ * token refresh, logout, and forgotten password changes.
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AuthServiceImpl Tests")
@@ -108,12 +109,14 @@ class AuthServiceImplTest {
     }
 
     /**
-     * Verifica que el registro de un nuevo usuario se completa correctamente y genera tokens de acceso.
+     * Verifies that registering a new user completes successfully and generates
+     * access tokens.
      */
     @Test
-    @DisplayName("registerUser - Registro exitoso")
+    @DisplayName("registerUser - Successful registration")
     void testRegister_Success() {
-        when(userRepository.existsByEmailOrUsername("carlos.martinez@eventmanager.es", "carlos.martinez")).thenReturn(false);
+        when(userRepository.existsByEmailOrUsername("carlos.martinez@eventmanager.es", "carlos.martinez"))
+                .thenReturn(false);
         when(passwordEncoder.encode("ClaveSegura2025")).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenReturn(testUser);
         when(userDetailsService.loadUserByUsername("carlos.martinez")).thenReturn(springUserDetails);
@@ -129,38 +132,45 @@ class AuthServiceImplTest {
     }
 
     /**
-     * Verifica que registrar un usuario con email o username ya existente lanza una excepcion BAD_REQUEST.
+     * Verifies that registering a user with an existing email or username throws
+     * BAD_REQUEST.
      */
     @Test
-    @DisplayName("registerUser - Usuario ya existe, lanza BAD_REQUEST")
+    @DisplayName("registerUser - User already exists, throws BAD_REQUEST")
     void testRegister_UserAlreadyExists() {
-        when(userRepository.existsByEmailOrUsername("carlos.martinez@eventmanager.es", "carlos.martinez")).thenReturn(true);
+        when(userRepository.existsByEmailOrUsername("carlos.martinez@eventmanager.es", "carlos.martinez"))
+                .thenReturn(true);
 
-        CustomException ex = assertThrows(CustomException.class, () -> authService.registerUser(userCreateDTO, response));
+        CustomException ex = assertThrows(CustomException.class,
+                () -> authService.registerUser(userCreateDTO, response));
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
         assertEquals(Constantes.MESSAGE_USER_ALREADY_REGISTERED, ex.getMessage());
     }
 
     /**
-     * Verifica que un error inesperado durante el registro produce una excepcion INTERNAL_SERVER_ERROR.
+     * Verifies that an unexpected error during registration results in
+     * INTERNAL_SERVER_ERROR.
      */
     @Test
-    @DisplayName("registerUser - Error inesperado, lanza INTERNAL_SERVER_ERROR")
+    @DisplayName("registerUser - Unexpected error, throws INTERNAL_SERVER_ERROR")
     void testRegister_UnexpectedError() {
-        when(userRepository.existsByEmailOrUsername("carlos.martinez@eventmanager.es", "carlos.martinez")).thenReturn(false);
+        when(userRepository.existsByEmailOrUsername("carlos.martinez@eventmanager.es", "carlos.martinez"))
+                .thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenReturn("encoded");
         when(userRepository.save(any(User.class))).thenThrow(new RuntimeException("DB error"));
 
-        CustomException ex = assertThrows(CustomException.class, () -> authService.registerUser(userCreateDTO, response));
+        CustomException ex = assertThrows(CustomException.class,
+                () -> authService.registerUser(userCreateDTO, response));
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, ex.getStatus());
         assertEquals("DB error", ex.getMessage());
     }
 
     /**
-     * Verifica que el inicio de sesion con credenciales validas devuelve una respuesta exitosa con cookies.
+     * Verifies that login with valid credentials returns a successful response with
+     * cookies.
      */
     @Test
-    @DisplayName("login - Login exitoso")
+    @DisplayName("login - Successful login")
     void testLogin_Success() {
         LoginRequest loginRequest = LoginRequest.builder()
                 .username("carlos.martinez")
@@ -181,10 +191,10 @@ class AuthServiceImplTest {
     }
 
     /**
-     * Verifica que las credenciales incorrectas durante el login provocan una excepcion UNAUTHORIZED.
+     * Verifies that invalid credentials during login raise UNAUTHORIZED.
      */
     @Test
-    @DisplayName("login - Credenciales invalidas, lanza UNAUTHORIZED")
+    @DisplayName("login - Invalid credentials, throws UNAUTHORIZED")
     void testLogin_InvalidCredentials() {
         LoginRequest loginRequest = LoginRequest.builder()
                 .username("wrong")
@@ -199,10 +209,10 @@ class AuthServiceImplTest {
     }
 
     /**
-     * Verifica que un refresh token valido permite renovar el access token correctamente.
+     * Verifies that a valid refresh token allows access token renewal.
      */
     @Test
-    @DisplayName("refreshToken - Token valido, renueva access token")
+    @DisplayName("refreshToken - Valid token, refreshes access token")
     void testRefreshToken_Success() {
         io.jsonwebtoken.Claims claims = mock(io.jsonwebtoken.Claims.class);
         when(claims.getSubject()).thenReturn("carlos.martinez");
@@ -217,10 +227,11 @@ class AuthServiceImplTest {
     }
 
     /**
-     * Verifica que un refresh token invalido devuelve una respuesta FAILURE sin lanzar excepcion.
+     * Verifies that an invalid refresh token returns a FAILURE response without
+     * throwing an exception.
      */
     @Test
-    @DisplayName("refreshToken - Token invalido, retorna FAILURE sin excepcion")
+    @DisplayName("refreshToken - Invalid token, returns FAILURE without exception")
     void testRefreshToken_InvalidToken() {
         when(jwtTokenProvider.validateToken("invalidToken")).thenThrow(new RuntimeException("Invalid token"));
 
@@ -230,10 +241,10 @@ class AuthServiceImplTest {
     }
 
     /**
-     * Verifica que el cierre de sesion limpia el contexto de seguridad y elimina las cookies.
+     * Verifies that logout clears the security context and removes cookies.
      */
     @Test
-    @DisplayName("logout - Logout exitoso, limpia contexto y cookies")
+    @DisplayName("logout - Successful logout, clears context and cookies")
     void testLogout_Success() {
         AuthResponse result = authService.logout(response);
 
@@ -242,10 +253,10 @@ class AuthServiceImplTest {
     }
 
     /**
-     * Verifica que el cambio de contrasena olvidada se realiza correctamente cuando los datos son validos.
+     * Verifies that forgotten password change succeeds when data is valid.
      */
     @Test
-    @DisplayName("changeForgottenPassword - Cambio exitoso")
+    @DisplayName("changeForgottenPassword - Successful change")
     void testChangeForgottenPassword_Success() {
         String usernameValue = "carlos.martinez";
         User userWithMatchingName = User.builder()
@@ -262,7 +273,8 @@ class AuthServiceImplTest {
         dto.setNewPassword("newPass123");
         dto.setNewPasswordConfirm("newPass123");
 
-        when(userRepository.findByEmail("carlos.martinez@eventmanager.es")).thenReturn(Optional.of(userWithMatchingName));
+        when(userRepository.findByEmail("carlos.martinez@eventmanager.es"))
+                .thenReturn(Optional.of(userWithMatchingName));
         when(passwordEncoder.encode("newPass123")).thenReturn("encodedNewPass");
         when(userRepository.save(userWithMatchingName)).thenReturn(userWithMatchingName);
         when(userMapper.convertUserToUserDTO(userWithMatchingName)).thenReturn(testUserDTO);
@@ -275,10 +287,10 @@ class AuthServiceImplTest {
     }
 
     /**
-     * Verifica que si el email proporcionado no existe en el sistema se lanza NOT_FOUND.
+     * Verifies that NOT_FOUND is thrown when the provided email does not exist.
      */
     @Test
-    @DisplayName("changeForgottenPassword - Email no encontrado, lanza NOT_FOUND")
+    @DisplayName("changeForgottenPassword - Email not found, throws NOT_FOUND")
     void testChangeForgottenPassword_EmailNotFound() {
         UserForgottenPassword dto = new UserForgottenPassword();
         dto.setEmail("laura.sanchez@eventmanager.es");
@@ -290,10 +302,11 @@ class AuthServiceImplTest {
     }
 
     /**
-     * Verifica que si el nombre de usuario no coincide con el registrado se lanza BAD_REQUEST.
+     * Verifies that BAD_REQUEST is thrown when the username does not match the
+     * registered one.
      */
     @Test
-    @DisplayName("changeForgottenPassword - Username no coincide, lanza BAD_REQUEST")
+    @DisplayName("changeForgottenPassword - Username mismatch, throws BAD_REQUEST")
     void testChangeForgottenPassword_UsernameMismatch() {
         UserForgottenPassword dto = new UserForgottenPassword();
         dto.setEmail("carlos.martinez@eventmanager.es");
@@ -307,10 +320,11 @@ class AuthServiceImplTest {
     }
 
     /**
-     * Verifica que si la nueva contrasena y su confirmacion no coinciden se lanza BAD_REQUEST.
+     * Verifies that BAD_REQUEST is thrown when the new password and confirmation do
+     * not match.
      */
     @Test
-    @DisplayName("changeForgottenPassword - Passwords no coinciden, lanza BAD_REQUEST")
+    @DisplayName("changeForgottenPassword - Passwords do not match, throws BAD_REQUEST")
     void testChangeForgottenPassword_PasswordsMismatch() {
         String usernameValue = "carlos.martinez";
         User userWithMatchingName = User.builder()
@@ -327,7 +341,8 @@ class AuthServiceImplTest {
         dto.setNewPassword("newPass123");
         dto.setNewPasswordConfirm("differentPass");
 
-        when(userRepository.findByEmail("carlos.martinez@eventmanager.es")).thenReturn(Optional.of(userWithMatchingName));
+        when(userRepository.findByEmail("carlos.martinez@eventmanager.es"))
+                .thenReturn(Optional.of(userWithMatchingName));
 
         CustomException ex = assertThrows(CustomException.class, () -> authService.changeForgottenPassword(dto));
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());

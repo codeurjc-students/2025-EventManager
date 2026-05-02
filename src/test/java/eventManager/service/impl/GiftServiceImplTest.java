@@ -33,7 +33,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-/** Pruebas unitarias del servicio de regalos, incluyendo creacion, consulta, listado, actualizacion, eliminacion y gestion de contribuciones. */
+/**
+ * Unit tests for the gift service, including creation, retrieval, listing,
+ * updates, deletion, and contribution management.
+ */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("GiftServiceImpl Tests")
 class GiftServiceImplTest {
@@ -123,10 +126,11 @@ class GiftServiceImplTest {
     }
 
     /**
-     * Verifica que la creacion de un regalo se realiza correctamente y se persiste en base de datos.
+     * Verifies that gift creation completes correctly and is persisted in the
+     * database.
      */
     @Test
-    @DisplayName("createGift - Creacion exitosa")
+    @DisplayName("createGift - Successful creation")
     void testCreateGift_Success() {
         GiftCreateDTO createDTO = new GiftCreateDTO();
         createDTO.setName("New Gift");
@@ -154,10 +158,11 @@ class GiftServiceImplTest {
     }
 
     /**
-     * Verifica que crear un regalo con un nombre ya existente en el evento lanza BAD_REQUEST.
+     * Verifies that creating a gift with a name already in the event throws
+     * BAD_REQUEST.
      */
     @Test
-    @DisplayName("createGift - Nombre duplicado")
+    @DisplayName("createGift - Duplicate name")
     void testCreateGift_DuplicateName() {
         GiftCreateDTO createDTO = new GiftCreateDTO();
         createDTO.setName("Existing Gift");
@@ -174,10 +179,11 @@ class GiftServiceImplTest {
     }
 
     /**
-     * Verifica que crear un regalo con imagen que supera el tamaño máximo lanza BAD_REQUEST.
+     * Verifies that creating a gift with an image larger than the max size throws
+     * BAD_REQUEST.
      */
     @Test
-    @DisplayName("createGift - Imagen demasiado grande")
+    @DisplayName("createGift - Image too large")
     void testCreateGift_ImageTooLarge() {
         GiftCreateDTO createDTO = new GiftCreateDTO();
         createDTO.setName("New Gift");
@@ -209,27 +215,28 @@ class GiftServiceImplTest {
     }
 
     /**
-     * Verifica que un usuario no registrado en el evento no puede crear regalos.
+     * Verifies that a user not registered in the event cannot create gifts.
      */
     @Test
-    @DisplayName("createGift - Usuario no registrado en evento")
+    @DisplayName("createGift - User not registered in event")
     void testCreateGift_UserNotRegistered() {
         GiftCreateDTO createDTO = new GiftCreateDTO();
         createDTO.setName("Gift");
 
         when(eventService.getEvent("ABC123")).thenReturn(testEventDTO);
         when(eventService.getEventByEventCode("ABC123")).thenReturn(testEvent);
-        doThrow(new CustomException(HttpStatus.FORBIDDEN, Constantes.MESSAGE_USER_NOT_REGISTERED_IN_EVENT)).when(accessControlUtils).validateUserRegisteredInEvent(1);
+        doThrow(new CustomException(HttpStatus.FORBIDDEN, Constantes.MESSAGE_USER_NOT_REGISTERED_IN_EVENT))
+                .when(accessControlUtils).validateUserRegisteredInEvent(1);
 
         CustomException ex = assertThrows(CustomException.class, () -> giftService.createGift("ABC123", createDTO));
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
     }
 
     /**
-     * Verifica que se obtiene correctamente la informacion detallada de un regalo.
+     * Verifies that detailed gift information is retrieved correctly.
      */
     @Test
-    @DisplayName("getGiftInformation - Exitoso")
+    @DisplayName("getGiftInformation - Success")
     void testGetGiftInfo_Success() {
         when(eventService.getEvent("ABC123")).thenReturn(testEventDTO);
         when(giftRepository.findByGiftId(1)).thenReturn(Optional.of(testGift));
@@ -242,10 +249,10 @@ class GiftServiceImplTest {
     }
 
     /**
-     * Verifica que consultar un regalo inexistente lanza NOT_FOUND.
+     * Verifies that querying a non-existent gift throws NOT_FOUND.
      */
     @Test
-    @DisplayName("getGiftInformation - Regalo no encontrado")
+    @DisplayName("getGiftInformation - Gift not found")
     void testGetGiftInfo_NotFound() {
         when(eventService.getEvent("ABC123")).thenReturn(testEventDTO);
         when(giftRepository.findByGiftId(999)).thenReturn(Optional.empty());
@@ -255,16 +262,17 @@ class GiftServiceImplTest {
     }
 
     /**
-     * Verifica que el listado de regalos devuelve resultados paginados correctamente.
+     * Verifies that gift listing returns paginated results correctly.
      */
     @Test
-    @DisplayName("getGifts - Exitoso con resultados")
+    @DisplayName("getGifts - Success with results")
     void testGetGifts_Success() {
         when(eventService.getEvent("ABC123")).thenReturn(testEventDTO);
 
         Page<Gift> giftPage = new PageImpl<>(List.of(testGift));
         Specification<Gift> specification = (root, query, builder) -> builder.conjunction();
-        when(giftRepository.findAll(org.mockito.ArgumentMatchers.<Specification<Gift>>any(), any(Pageable.class))).thenReturn(giftPage);
+        when(giftRepository.findAll(org.mockito.ArgumentMatchers.<Specification<Gift>>any(), any(Pageable.class)))
+                .thenReturn(giftPage);
         when(giftSpecificationBuilder.build(anyList())).thenReturn(specification);
         when(giftMapper.convertGiftToGiftDTO(testGift, 1)).thenReturn(testGiftDTO);
 
@@ -275,37 +283,42 @@ class GiftServiceImplTest {
     }
 
     /**
-     * Verifica que listar regalos de un evento inexistente lanza NOT_FOUND.
+     * Verifies that listing gifts for a non-existent event throws NOT_FOUND.
      */
     @Test
-    @DisplayName("getGifts - Evento no encontrado")
+    @DisplayName("getGifts - Event not found")
     void testGetGifts_EventNotFound() {
-        when(eventService.getEvent("NOTFND")).thenThrow(new CustomException(HttpStatus.NOT_FOUND, Constantes.MESSAGE_EVENT_DOES_NOT_EXIST));
+        when(eventService.getEvent("NOTFND"))
+                .thenThrow(new CustomException(HttpStatus.NOT_FOUND, Constantes.MESSAGE_EVENT_DOES_NOT_EXIST));
 
-        CustomException ex = assertThrows(CustomException.class, () -> giftService.getGifts("NOTFND", 1, 10, "name", "ASC", null));
+        CustomException ex = assertThrows(CustomException.class,
+                () -> giftService.getGifts("NOTFND", 1, 10, "name", "ASC", null));
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatus());
     }
 
     /**
-     * Verifica que un error inesperado al listar regalos produce INTERNAL_SERVER_ERROR.
+     * Verifies that an unexpected error while listing gifts results in
+     * INTERNAL_SERVER_ERROR.
      */
     @Test
-    @DisplayName("getGifts - Error inesperado lanza INTERNAL_SERVER_ERROR")
+    @DisplayName("getGifts - Unexpected error throws INTERNAL_SERVER_ERROR")
     void testGetGifts_InternalError() {
         when(eventService.getEvent("ABC123")).thenReturn(testEventDTO);
         Specification<Gift> specification = (root, query, builder) -> builder.conjunction();
         when(giftSpecificationBuilder.build(anyList())).thenReturn(specification);
-        when(giftRepository.findAll(org.mockito.ArgumentMatchers.<Specification<Gift>>any(), any(Pageable.class))).thenThrow(new RuntimeException("DB error"));
+        when(giftRepository.findAll(org.mockito.ArgumentMatchers.<Specification<Gift>>any(), any(Pageable.class)))
+                .thenThrow(new RuntimeException("DB error"));
 
-        CustomException ex = assertThrows(CustomException.class, () -> giftService.getGifts("ABC123", 1, 10, "name", "ASC", null));
+        CustomException ex = assertThrows(CustomException.class,
+                () -> giftService.getGifts("ABC123", 1, 10, "name", "ASC", null));
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, ex.getStatus());
     }
 
     /**
-     * Verifica que la actualizacion de un regalo existente se completa correctamente.
+     * Verifies that updating an existing gift completes correctly.
      */
     @Test
-    @DisplayName("updateGift - Actualizacion exitosa")
+    @DisplayName("updateGift - Successful update")
     void testUpdateGift_Success() {
         GiftUpdateDTO updateDTO = new GiftUpdateDTO();
         updateDTO.setName("Updated Gift");
@@ -327,10 +340,11 @@ class GiftServiceImplTest {
     }
 
     /**
-     * Verifica que actualizar un regalo con imagen demasiado grande lanza BAD_REQUEST.
+     * Verifies that updating a gift with an image that is too large throws
+     * BAD_REQUEST.
      */
     @Test
-    @DisplayName("updateGift - Imagen demasiado grande")
+    @DisplayName("updateGift - Image too large")
     void testUpdateGift_ImageTooLarge() {
         GiftUpdateDTO updateDTO = new GiftUpdateDTO();
         updateDTO.setName("Updated Gift");
@@ -355,37 +369,41 @@ class GiftServiceImplTest {
     }
 
     /**
-     * Verifica que intentar actualizar un regalo inexistente lanza NOT_FOUND.
+     * Verifies that attempting to update a non-existent gift throws NOT_FOUND.
      */
     @Test
-    @DisplayName("updateGift - Regalo no encontrado")
+    @DisplayName("updateGift - Gift not found")
     void testUpdateGift_NotFound() {
         when(eventService.getEvent("ABC123")).thenReturn(testEventDTO);
         when(giftRepository.findByGiftId(999)).thenReturn(Optional.empty());
 
-        CustomException ex = assertThrows(CustomException.class, () -> giftService.updateGift("ABC123", 999, new GiftUpdateDTO()));
+        CustomException ex = assertThrows(CustomException.class,
+                () -> giftService.updateGift("ABC123", 999, new GiftUpdateDTO()));
         assertEquals(HttpStatus.NOT_FOUND, ex.getStatus());
     }
 
     /**
-     * Verifica que un usuario sin permisos no puede actualizar el regalo.
+     * Verifies that a user without permissions cannot update the gift.
      */
     @Test
-    @DisplayName("updateGift - No autorizado")
+    @DisplayName("updateGift - Not authorized")
     void testUpdateGift_Unauthorized() {
         when(eventService.getEvent("ABC123")).thenReturn(testEventDTO);
         when(giftRepository.findByGiftId(1)).thenReturn(Optional.of(testGift));
-        doThrow(new CustomException(HttpStatus.FORBIDDEN, Constantes.MESSAGE_GIFT_UPDATE_FORBIDDEN)).when(accessControlUtils).validateHostOrGiftCreator(1, "testuser");
+        doThrow(new CustomException(HttpStatus.FORBIDDEN, Constantes.MESSAGE_GIFT_UPDATE_FORBIDDEN))
+                .when(accessControlUtils).validateHostOrGiftCreator(1, "testuser");
 
-        CustomException ex = assertThrows(CustomException.class, () -> giftService.updateGift("ABC123", 1, new GiftUpdateDTO()));
+        CustomException ex = assertThrows(CustomException.class,
+                () -> giftService.updateGift("ABC123", 1, new GiftUpdateDTO()));
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
     }
 
     /**
-     * Verifica que al actualizar un regalo se recalcula el monto recaudado a partir de las contribuciones.
+     * Verifies that updating a gift recalculates the collected amount from
+     * contributions.
      */
     @Test
-    @DisplayName("updateGift - Recalcula collected desde contribuciones")
+    @DisplayName("updateGift - Recalculates collected from contributions")
     void testUpdateGift_RecalculateCollected() {
         GiftUpdateDTO updateDTO = new GiftUpdateDTO();
         updateDTO.setName("Gift");
@@ -408,10 +426,11 @@ class GiftServiceImplTest {
     }
 
     /**
-     * Verifica que la eliminacion de un regalo se completa correctamente junto con sus contribuciones.
+     * Verifies that deleting a gift completes correctly along with its
+     * contributions.
      */
     @Test
-    @DisplayName("deleteGift - Eliminacion exitosa")
+    @DisplayName("deleteGift - Successful deletion")
     void testDeleteGift_Success() {
         when(eventService.getEvent("ABC123")).thenReturn(testEventDTO);
         when(giftRepository.findByGiftId(1)).thenReturn(Optional.of(testGift));
@@ -426,24 +445,26 @@ class GiftServiceImplTest {
     }
 
     /**
-     * Verifica que un usuario sin rol HOST no puede eliminar un regalo del evento.
+     * Verifies that a user without the HOST role cannot delete a gift from the
+     * event.
      */
     @Test
-    @DisplayName("deleteGift - No es HOST")
+    @DisplayName("deleteGift - Not HOST")
     void testDeleteGift_NotHost() {
         when(eventService.getEvent("ABC123")).thenReturn(testEventDTO);
         when(giftRepository.findByGiftId(1)).thenReturn(Optional.of(testGift));
-        doThrow(new CustomException(HttpStatus.FORBIDDEN, Constantes.MESSAGE_GIFT_UPDATE_FORBIDDEN)).when(accessControlUtils).validateHostOrGiftCreator(1, "testuser");
+        doThrow(new CustomException(HttpStatus.FORBIDDEN, Constantes.MESSAGE_GIFT_UPDATE_FORBIDDEN))
+                .when(accessControlUtils).validateHostOrGiftCreator(1, "testuser");
 
         CustomException ex = assertThrows(CustomException.class, () -> giftService.deleteGift("ABC123", 1));
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
     }
 
     /**
-     * Verifica que intentar eliminar un regalo inexistente lanza NOT_FOUND.
+     * Verifies that attempting to delete a non-existent gift throws NOT_FOUND.
      */
     @Test
-    @DisplayName("deleteGift - Regalo no encontrado")
+    @DisplayName("deleteGift - Gift not found")
     void testDeleteGift_GiftNotFound() {
         when(eventService.getEvent("ABC123")).thenReturn(testEventDTO);
         when(giftRepository.findByGiftId(999)).thenReturn(Optional.empty());
@@ -453,10 +474,11 @@ class GiftServiceImplTest {
     }
 
     /**
-     * Verifica que se crea correctamente una nueva contribucion a un regalo y se actualiza el monto recaudado.
+     * Verifies that a new contribution to a gift is created correctly and the
+     * collected amount is updated.
      */
     @Test
-    @DisplayName("createUpdateGiftContribution - Nueva contribucion")
+    @DisplayName("createUpdateGiftContribution - New contribution")
     void testContribution_New() {
         UserGiftDTO userGiftDTO = new UserGiftDTO();
         userGiftDTO.setUserId(1);
@@ -467,7 +489,8 @@ class GiftServiceImplTest {
         when(giftRepository.findByGiftId(1)).thenReturn(Optional.of(testGift));
         when(userService.getUser(1)).thenReturn(testUser);
         when(giftContributionRepository.findByGiftId_GiftIdAndUserId_UserId(1, 1)).thenReturn(Optional.empty());
-        when(giftContributionRepository.save(any(GiftContribution.class))).thenReturn(GiftContribution.builder().build());
+        when(giftContributionRepository.save(any(GiftContribution.class)))
+                .thenReturn(GiftContribution.builder().build());
         when(giftRepository.save(testGift)).thenReturn(testGift);
         when(giftMapper.convertGiftToGiftExtendedDTO(testGift, 1)).thenReturn(testGiftExtendedDTO);
         when(giftContributionRepository.findByGiftId_GiftId(1)).thenReturn(Collections.emptyList());
@@ -479,10 +502,11 @@ class GiftServiceImplTest {
     }
 
     /**
-     * Verifica que al actualizar una contribucion existente se recalcula correctamente el monto recaudado.
+     * Verifies that updating an existing contribution recalculates the collected
+     * amount correctly.
      */
     @Test
-    @DisplayName("createUpdateGiftContribution - Actualizar contribucion existente")
+    @DisplayName("createUpdateGiftContribution - Update existing contribution")
     void testContribution_UpdateExisting() {
         UserGiftDTO userGiftDTO = new UserGiftDTO();
         userGiftDTO.setUserId(1);
@@ -500,7 +524,8 @@ class GiftServiceImplTest {
         doNothing().when(accessControlUtils).validateUserRegisteredInEvent(1);
         when(giftRepository.findByGiftId(1)).thenReturn(Optional.of(testGift));
         when(userService.getUser(1)).thenReturn(testUser);
-        when(giftContributionRepository.findByGiftId_GiftIdAndUserId_UserId(1, 1)).thenReturn(Optional.of(existingContrib));
+        when(giftContributionRepository.findByGiftId_GiftIdAndUserId_UserId(1, 1))
+                .thenReturn(Optional.of(existingContrib));
         when(giftContributionRepository.save(existingContrib)).thenReturn(existingContrib);
         when(giftRepository.save(testGift)).thenReturn(testGift);
         when(giftMapper.convertGiftToGiftExtendedDTO(testGift, 1)).thenReturn(testGiftExtendedDTO);
@@ -514,10 +539,10 @@ class GiftServiceImplTest {
     }
 
     /**
-     * Verifica que una contribucion con monto negativo lanza BAD_REQUEST.
+     * Verifies that a contribution with a negative amount throws BAD_REQUEST.
      */
     @Test
-    @DisplayName("createUpdateGiftContribution - Monto negativo")
+    @DisplayName("createUpdateGiftContribution - Negative amount")
     void testContribution_NegativeAmount() {
         UserGiftDTO userGiftDTO = new UserGiftDTO();
         userGiftDTO.setUserId(1);
@@ -527,16 +552,17 @@ class GiftServiceImplTest {
         doNothing().when(accessControlUtils).validateUserRegisteredInEvent(1);
         when(giftRepository.findByGiftId(1)).thenReturn(Optional.of(testGift));
 
-        CustomException ex = assertThrows(CustomException.class, () -> giftService.createUpdateGiftContribution("ABC123", 1, userGiftDTO));
+        CustomException ex = assertThrows(CustomException.class,
+                () -> giftService.createUpdateGiftContribution("ABC123", 1, userGiftDTO));
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
         assertEquals(Constantes.MESSAGE_GIFT_CONTRIBUTION_POSITIVE, ex.getMessage());
     }
 
     /**
-     * Verifica que una contribucion con monto cero lanza BAD_REQUEST.
+     * Verifies that a contribution with a zero amount throws BAD_REQUEST.
      */
     @Test
-    @DisplayName("createUpdateGiftContribution - Monto cero")
+    @DisplayName("createUpdateGiftContribution - Zero amount")
     void testContribution_ZeroAmount() {
         UserGiftDTO userGiftDTO = new UserGiftDTO();
         userGiftDTO.setUserId(1);
@@ -546,15 +572,16 @@ class GiftServiceImplTest {
         doNothing().when(accessControlUtils).validateUserRegisteredInEvent(1);
         when(giftRepository.findByGiftId(1)).thenReturn(Optional.of(testGift));
 
-        CustomException ex = assertThrows(CustomException.class, () -> giftService.createUpdateGiftContribution("ABC123", 1, userGiftDTO));
+        CustomException ex = assertThrows(CustomException.class,
+                () -> giftService.createUpdateGiftContribution("ABC123", 1, userGiftDTO));
         assertEquals(HttpStatus.BAD_REQUEST, ex.getStatus());
     }
 
     /**
-     * Verifica que al alcanzar el precio total del regalo se marca como completamente pagado.
+     * Verifies that reaching the gift's total price marks it as paid in full.
      */
     @Test
-    @DisplayName("createUpdateGiftContribution - paidInFull se activa al completar")
+    @DisplayName("createUpdateGiftContribution - PaidInFull set when completed")
     void testContribution_PaidInFull() {
         UserGiftDTO userGiftDTO = new UserGiftDTO();
         userGiftDTO.setUserId(1);
@@ -568,7 +595,8 @@ class GiftServiceImplTest {
         when(giftRepository.findByGiftId(1)).thenReturn(Optional.of(testGift));
         when(userService.getUser(1)).thenReturn(testUser);
         when(giftContributionRepository.findByGiftId_GiftIdAndUserId_UserId(1, 1)).thenReturn(Optional.empty());
-        when(giftContributionRepository.save(any(GiftContribution.class))).thenReturn(GiftContribution.builder().build());
+        when(giftContributionRepository.save(any(GiftContribution.class)))
+                .thenReturn(GiftContribution.builder().build());
         when(giftRepository.save(testGift)).thenReturn(testGift);
         when(giftMapper.convertGiftToGiftExtendedDTO(testGift, 1)).thenReturn(testGiftExtendedDTO);
         when(giftContributionRepository.findByGiftId_GiftId(1)).thenReturn(Collections.emptyList());

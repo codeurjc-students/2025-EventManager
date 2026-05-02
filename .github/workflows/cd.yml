@@ -1,12 +1,11 @@
 name: CD - Docker Publish
 
 on:
-  workflow_run:
-    workflows: ["CI"]
-    types:
-      - completed
-  release:
-    types: [published]
+  push:
+    branches:
+      - main
+      - release/**
+      - hotfix/**
   workflow_dispatch:
 
 permissions:
@@ -25,14 +24,11 @@ jobs:
   build-and-push:
     name: Build and publish Docker image
     runs-on: ubuntu-latest
-    timeout-minutes: 30
-    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'release' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main') }}
+    timeout-minutes: 15
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+        uses: actions/checkout@v6
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -47,15 +43,15 @@ jobs:
         id: compose_tag
         shell: bash
         run: |
-          SHA="${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}"
+          SHA="${{ github.sha }}"
           SHORT_SHA="${SHA:0:7}"
 
-          if [ "${{ github.event_name }}" = "release" ]; then
-            echo "tag=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event_name }}" = "workflow_run" ] && [ "${{ github.event.workflow_run.head_branch }}" = "main" ]; then
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
             echo "tag=main-${SHORT_SHA}" >> $GITHUB_OUTPUT
-          elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            echo "tag=main-${SHORT_SHA}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            BRANCH="${{ github.ref_name }}"
+            SAFE_BRANCH="${BRANCH//\//-}"
+            echo "tag=${SAFE_BRANCH}-${SHORT_SHA}" >> $GITHUB_OUTPUT
           else
             echo "tag=manual-${SHORT_SHA}" >> $GITHUB_OUTPUT
           fi
@@ -80,7 +76,8 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Publish docker-compose.aws.yaml as OCI artifact
-        if: ${{ github.event_name == 'release' }}
+        if: ${{ github.event_name == 'push' && (github.ref_name == 'main' || startsWith(github.ref_name, 'release/') || startsWith(github.ref_name, 'hotfix/')) }}
         run: |
           docker compose -f docker-compose.aws.yaml publish \
             ${{ env.DOCKERHUB_COMPOSE }}:${{ steps.compose_tag.outputs.tag }}
+

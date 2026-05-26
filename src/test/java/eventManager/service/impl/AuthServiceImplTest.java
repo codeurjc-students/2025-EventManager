@@ -13,7 +13,6 @@ import eventManager.security.jwt.AuthResponse;
 import eventManager.security.jwt.JwtTokenProvider;
 import eventManager.security.jwt.LoginRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.openapitools.jackson.nullable.JsonNullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -262,14 +261,14 @@ class AuthServiceImplTest {
         User userWithMatchingName = User.builder()
                 .userId(1)
                 .email("carlos.martinez@eventmanager.es")
-                .username(String.valueOf(JsonNullable.of(usernameValue)))
+                .username(usernameValue)
                 .password("encodedPassword")
                 .role(UserRole.USER)
                 .build();
 
         UserForgottenPassword dto = new UserForgottenPassword();
         dto.setEmail("carlos.martinez@eventmanager.es");
-        dto.setUsername(JsonNullable.of(usernameValue));
+        dto.setUsername(usernameValue);
         dto.setNewPassword("newPass123");
         dto.setNewPasswordConfirm("newPass123");
 
@@ -310,7 +309,7 @@ class AuthServiceImplTest {
     void testChangeForgottenPassword_UsernameMismatch() {
         UserForgottenPassword dto = new UserForgottenPassword();
         dto.setEmail("carlos.martinez@eventmanager.es");
-        dto.setUsername(JsonNullable.of("wronguser"));
+        dto.setUsername("wronguser");
 
         when(userRepository.findByEmail("carlos.martinez@eventmanager.es")).thenReturn(Optional.of(testUser));
 
@@ -330,14 +329,14 @@ class AuthServiceImplTest {
         User userWithMatchingName = User.builder()
                 .userId(1)
                 .email("carlos.martinez@eventmanager.es")
-                .username(String.valueOf(JsonNullable.of(usernameValue)))
+                .username(usernameValue)
                 .password("encodedPassword")
                 .role(UserRole.USER)
                 .build();
 
         UserForgottenPassword dto = new UserForgottenPassword();
         dto.setEmail("carlos.martinez@eventmanager.es");
-        dto.setUsername(JsonNullable.of(usernameValue));
+        dto.setUsername(usernameValue);
         dto.setNewPassword("newPass123");
         dto.setNewPasswordConfirm("differentPass");
 

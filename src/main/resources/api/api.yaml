@@ -1196,6 +1196,7 @@ components:
           type: string
           maxLength: 50
         username:
+          type: string
           maxLength: 25
         newPassword:
           type: string

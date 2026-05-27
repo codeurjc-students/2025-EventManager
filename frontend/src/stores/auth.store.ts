@@ -100,11 +100,12 @@ export const useAuthStore = () => {
 
   const forgotPassword = async (forgottenPasswordData: any) => {
     try {
-      const response = await changeForgottenPassword(forgottenPasswordData);
+      await changeForgottenPassword(forgottenPasswordData);
       error.value = null;
-      return response;
+      return true;
     } catch (err: any) {
       error.value = err.response?.data?.message || 'Password change failed';
+      return false;
     }
   };
 

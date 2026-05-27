@@ -69,8 +69,11 @@ const successMessage = ref('');
 const auth = useAuthStore();
 
 const submitForm = async () => {
-  await auth.forgotPassword({ ...form.value });
-  if (!auth.error) {
+  successMessage.value = '';
+  auth.clearError();
+
+  const success = await auth.forgotPassword({ ...form.value });
+  if (success) {
     successMessage.value = 'Contraseña cambiada correctamente. Ya puede iniciar sesión con la nueva contraseña.';
     form.value.email = '';
     form.value.username = '';

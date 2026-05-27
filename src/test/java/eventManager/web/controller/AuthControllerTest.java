@@ -445,14 +445,22 @@ class AuthControllerTest {
     @DisplayName("Forgot Password - Successful forgotten password change")
     void testForgotPassword_Success() throws Exception {
         eventManager.dto.UserDTO userDTO = new eventManager.dto.UserDTO();
+        userDTO.setUserId(1);
+        userDTO.setUsername("carlos.martinez");
+        UserForgottenPassword request = UserForgottenPassword.builder()
+                .email("carlos.martinez@eventmanager.es")
+                .username("carlos.martinez")
+                .newPassword("ClaveNueva2025")
+                .newPasswordConfirm("ClaveNueva2025")
+                .build();
         when(authService.changeForgottenPassword(any(UserForgottenPassword.class))).thenReturn(userDTO);
 
         mockMvc.perform(post("/api/auth/forgot-password")
-                .param("email", "carlos.martinez@eventmanager.es")
-                .param("username", "carlos.martinez")
-                .param("newPassword", "ClaveNueva2025")
-                .param("newPasswordConfirm", "ClaveNueva2025"))
-                .andExpect(status().is5xxServerError());
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(1))
+                .andExpect(jsonPath("$.username").value("carlos.martinez"));
     }
 
     /**
@@ -462,14 +470,19 @@ class AuthControllerTest {
     @Test
     @DisplayName("Forgot Password - Email does not exist")
     void testForgotPassword_EmailNotFound() throws Exception {
+        UserForgottenPassword request = UserForgottenPassword.builder()
+                .email("laura.sanchez@eventmanager.es")
+                .username("carlos.martinez")
+                .newPassword("ClaveNueva2025")
+                .newPasswordConfirm("ClaveNueva2025")
+                .build();
+
         when(authService.changeForgottenPassword(any(UserForgottenPassword.class)))
                 .thenThrow(new RuntimeException("Email not found"));
 
         mockMvc.perform(post("/api/auth/forgot-password")
-                .param("email", "laura.sanchez@eventmanager.es")
-                .param("username", "carlos.martinez")
-                .param("newPassword", "ClaveNueva2025")
-                .param("newPasswordConfirm", "ClaveNueva2025"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().is5xxServerError());
     }
 
@@ -479,14 +492,19 @@ class AuthControllerTest {
     @Test
     @DisplayName("Forgot Password - New password invalid (too short)")
     void testForgotPassword_InvalidNewPassword() throws Exception {
+        UserForgottenPassword request = UserForgottenPassword.builder()
+                .email("carlos.martinez@eventmanager.es")
+                .username("carlos.martinez")
+                .newPassword("123")
+                .newPasswordConfirm("123")
+                .build();
+
         when(authService.changeForgottenPassword(any(UserForgottenPassword.class)))
                 .thenThrow(new RuntimeException("Invalid new password"));
 
         mockMvc.perform(post("/api/auth/forgot-password")
-                .param("email", "carlos.martinez@eventmanager.es")
-                .param("username", "carlos.martinez")
-                .param("newPassword", "123")
-                .param("newPasswordConfirm", "123"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().is5xxServerError());
     }
 }

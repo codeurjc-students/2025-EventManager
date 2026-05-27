@@ -52,7 +52,7 @@ public class AuthController {
 	}
 
 	@PostMapping("/forgot-password")
-	public ResponseEntity<UserDTO> changeForgottenPassword(@Valid UserForgottenPassword userForgotenPassword) {
+	public ResponseEntity<UserDTO> changeForgottenPassword(@Valid @RequestBody UserForgottenPassword userForgotenPassword) {
 		log.info("process=change-forgotten-password");
 		return new ResponseEntity<>(authService.changeForgottenPassword(userForgotenPassword), HttpStatus.OK);
 	}

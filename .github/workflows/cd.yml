@@ -78,6 +78,6 @@ jobs:
       - name: Publish docker-compose.aws.yaml as OCI artifact
         if: ${{ github.event_name == 'push' && (github.ref_name == 'main' || startsWith(github.ref_name, 'release/') || startsWith(github.ref_name, 'hotfix/')) }}
         run: |
-          docker compose -f docker-compose.aws.yaml publish \
+          docker compose -f docker-compose.aws.yaml publish -y \
             ${{ env.DOCKERHUB_COMPOSE }}:${{ steps.compose_tag.outputs.tag }}
 

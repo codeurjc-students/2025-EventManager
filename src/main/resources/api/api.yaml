@@ -1128,8 +1128,6 @@ components:
           format: int32
         email:
           type: string
-        password:
-          type: string
         username:
           type: string
         firstName:

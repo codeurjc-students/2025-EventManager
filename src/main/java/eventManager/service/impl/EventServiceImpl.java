@@ -182,6 +182,9 @@ public class EventServiceImpl implements EventService{
 	@Override
 	public EventDTO createEvent(Integer userId, CreateUpdateEventDTO createUpdateEventDTO) {
 		try {			
+			// Validamos que el usuario de la petición coincide con el usuario autenticado en JWT
+			accessControlUtils.validateUserOwnership(userId);
+
 			// Validamos que el usuario existe
 			userService.getUserInformation(userId);
 			
